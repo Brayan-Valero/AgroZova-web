@@ -60,7 +60,7 @@ const Login = () => {
                     <div className="w-full mb-6">
                         <div className="w-full bg-center bg-no-repeat bg-cover flex flex-col justify-end overflow-hidden bg-white dark:bg-[#1a2e16] rounded-xl min-h-[160px] border border-[#dde6db] dark:border-[#2a3f28] shadow-sm"
                             style={{
-                                backgroundImage: 'linear-gradient(rgba(0,0,0,0.1), rgba(0,0,0,0.3)), url("https://lh3.googleusercontent.com/aida-public/AB6AXuAcALPNeEG-L9mnz19GkOpRr7qoBKOtKztNaJ0YGkUrCNGeiXY4iRr78AXQl9Wx_ztEe3H1UllrGaM01BJr_w1yNSZ-NaO9dhylBF-lRyktWdbej8Vx7YD39OoaDR-j0HMlDIN4u3FlldxgHDfP4pJVkita2GZBO9Hm3xekCML2HHOT5OjkRfPNU76BbsJ3SEuWDcBwnY_VHwQ5_J6YA2OnZFRXGfWBKgLHHKhhmz9ToS4VS8rSPf1J0ZLdQmvF0hT9OEwDsOw7HuR-")'
+                                backgroundImage: 'linear-gradient(rgba(0,0,0,0.1), rgba(0,0,0,0.3)), url("/logo.jpg")'
                             }}>
                         </div>
                     </div>

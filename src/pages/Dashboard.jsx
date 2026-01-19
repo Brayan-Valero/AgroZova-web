@@ -48,7 +48,7 @@ const Dashboard = () => {
                         <div className="shrink-0">
                             <div
                                 className="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10 border border-primary/20 shadow-sm"
-                                style={{ backgroundImage: 'url("https://lh3.googleusercontent.com/aida-public/AB6AXuA03o_5743S9U3HrjRhi821bllMOjkzntmhNBtObPAkR-wNQfTj4Nnb0D2YelQbEQt6O0YTRwLzN0MVx8W-8FBTmLXpuuK7Zhm-rjwkICEu15c442PD7b1pnn0pQZpqIM7koCHsmEHsD6ANdgyqw3qaYiMDRMuBPc3VLKgJMwOzMD9oxezS95265GI1p-Gf0Y8Q8COzo4tet4XRUiVAnfSYeXlvAQ32qhixAvMO3ymfWHIDxmuFq74qkm1C9dBa3_EU6krYnA-imMl7")' }}
+                                style={{ backgroundImage: 'url("/logo.jpg")' }}
                             ></div>
                         </div>
                         <div>
