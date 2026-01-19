@@ -58,43 +58,39 @@ export const getDashboardStats = async (userId) => {
     }
 }
 
-export const getFinancialMovements = async (userId, filterDate) => {
-    // Helper to filter by date string if in demo mode
-    const isNewerThan = (dateStr, filterDateStr) => {
-        if (!filterDateStr) return true
-        return new Date(dateStr) >= new Date(filterDateStr)
-    }
-
-    /* if (isDemo()) {
-        const { data: ingresosPollos } = await demoService.getAll('ingresos_pollos', userId)
-        const { data: ventasGallinas } = await demoService.getAll('ventas_gallinas', userId)
-        const { data: produccionLeche } = await demoService.getAll('produccion_leche', userId)
-
-        const { data: gastosPollos } = await demoService.getAll('gastos_pollos', userId)
-        const { data: gastosGallinas } = await demoService.getAll('gastos_gallinas', userId)
-        const { data: gastosVacas } = await demoService.getAll('gastos_vacas', userId)
-
-        const todosMovimientos = [
-            ...(ingresosPollos?.filter(i => isNewerThan(i.fecha, filterDate)).map(i => ({ tipo: 'ingreso', concepto: 'Venta de Pollos', monto: i.monto_total, fecha: i.fecha, modulo: 'Pollos' })) || []),
-            ...(ventasGallinas?.filter(v => isNewerThan(v.fecha, filterDate)).map(v => ({ tipo: 'ingreso', concepto: 'Venta de Huevos', monto: v.monto_total, fecha: v.fecha, modulo: 'Gallinas' })) || []),
-            ...(produccionLeche?.filter(p => isNewerThan(p.fecha, filterDate)).map(p => ({ tipo: 'ingreso', concepto: 'Venta de Leche', monto: p.monto_total, fecha: p.fecha, modulo: 'Vacas' })) || []),
-            ...(gastosPollos?.filter(g => isNewerThan(g.fecha, filterDate)).map(g => ({ tipo: 'gasto', concepto: g.concepto, monto: g.monto, fecha: g.fecha, modulo: 'Pollos', categoria: g.categoria })) || []),
-            ...(gastosGallinas?.filter(g => isNewerThan(g.fecha, filterDate)).map(g => ({ tipo: 'gasto', concepto: g.concepto, monto: g.monto, fecha: g.fecha, modulo: 'Gallinas', categoria: g.categoria })) || []),
-            ...(gastosVacas?.filter(g => isNewerThan(g.fecha, filterDate)).map(g => ({ tipo: 'gasto', concepto: g.concepto, monto: g.monto, fecha: g.fecha, modulo: 'Vacas', categoria: g.categoria })) || [])
-        ]
-
-        todosMovimientos.sort((a, b) => new Date(b.fecha) - new Date(a.fecha))
-        return todosMovimientos
-    } */
-
+export const getFinancialMovements = async (userId, startDate, endDate = null) => {
     try {
-        const { data: ingresosPollos } = await supabase.from('ingresos_pollos').select('monto_total, fecha').gte('fecha', filterDate)
-        const { data: ventasGallinas } = await supabase.from('ventas_gallinas').select('monto_total, fecha').gte('fecha', filterDate)
-        const { data: produccionLeche } = await supabase.from('produccion_leche').select('monto_total, fecha').gte('fecha', filterDate)
+        let ingresosPollosQuery = supabase.from('ingresos_pollos').select('monto_total, fecha').gte('fecha', startDate)
+        let ventasGallinasQuery = supabase.from('ventas_gallinas').select('monto_total, fecha').gte('fecha', startDate)
+        let produccionLecheQuery = supabase.from('produccion_leche').select('monto_total, fecha').gte('fecha', startDate)
+        let gastosPollosQuery = supabase.from('gastos_pollos').select('*').gte('fecha', startDate)
+        let gastosGallinasQuery = supabase.from('gastos_gallinas').select('*').gte('fecha', startDate)
+        let gastosVacasQuery = supabase.from('gastos_vacas').select('*').gte('fecha', startDate)
 
-        const { data: gastosPollos } = await supabase.from('gastos_pollos').select('*').gte('fecha', filterDate)
-        const { data: gastosGallinas } = await supabase.from('gastos_gallinas').select('*').gte('fecha', filterDate)
-        const { data: gastosVacas } = await supabase.from('gastos_vacas').select('*').gte('fecha', filterDate)
+        if (endDate) {
+            ingresosPollosQuery = ingresosPollosQuery.lte('fecha', endDate)
+            ventasGallinasQuery = ventasGallinasQuery.lte('fecha', endDate)
+            produccionLecheQuery = produccionLecheQuery.lte('fecha', endDate)
+            gastosPollosQuery = gastosPollosQuery.lte('fecha', endDate)
+            gastosGallinasQuery = gastosGallinasQuery.lte('fecha', endDate)
+            gastosVacasQuery = gastosVacasQuery.lte('fecha', endDate)
+        }
+
+        const [
+            { data: ingresosPollos },
+            { data: ventasGallinas },
+            { data: produccionLeche },
+            { data: gastosPollos },
+            { data: gastosGallinas },
+            { data: gastosVacas }
+        ] = await Promise.all([
+            ingresosPollosQuery,
+            ventasGallinasQuery,
+            produccionLecheQuery,
+            gastosPollosQuery,
+            gastosGallinasQuery,
+            gastosVacasQuery
+        ])
 
         const todosMovimientos = [
             ...(ingresosPollos?.map(i => ({ tipo: 'ingreso', concepto: 'Venta de Pollos', monto: i.monto_total, fecha: i.fecha, modulo: 'Pollos' })) || []),
@@ -143,5 +139,132 @@ export const getInventoryStats = async (userId) => {
     } catch (error) {
         console.error('Error inventory stats:', error)
         return { totalPollos: 0, totalGallinas: 0, totalVacas: 0 }
+    }
+}
+
+export const getProductionHistory = async (userId, days = 30) => {
+    const today = new Date()
+    const startDate = new Date(today)
+    startDate.setDate(today.getDate() - days)
+    const startDateStr = startDate.toISOString().split('T')[0]
+
+    try {
+        // Huevos
+        const { data: huevos } = await supabase
+            .from('ventas_gallinas')
+            .select('fecha, cantidad')
+            .eq('unidad_medida', 'unidad') // Asumiendo que graficamos unidades individuales o cartones, normalizar si es necesario
+            .gte('fecha', startDateStr)
+            .order('fecha', { ascending: true })
+
+        // Leche
+        const { data: leche } = await supabase
+            .from('produccion_leche')
+            .select('fecha, litros')
+            .gte('fecha', startDateStr)
+            .order('fecha', { ascending: true })
+
+        // Agrupar por fecha
+        const historyMap = {}
+
+        // Llenar con fechas vacías para continuidad
+        for (let i = 0; i <= days; i++) {
+            const d = new Date(startDate)
+            d.setDate(startDate.getDate() + i)
+            const dateStr = d.toISOString().split('T')[0]
+            // Formato corto para gráfica DD/MM
+            const shortDate = `${d.getDate()}/${d.getMonth() + 1}`
+
+            historyMap[dateStr] = {
+                fecha: dateStr,
+                shortDate,
+                huevos: 0,
+                leche: 0
+            }
+        }
+
+        huevos?.forEach(h => {
+            if (historyMap[h.fecha]) {
+                historyMap[h.fecha].huevos += Number(h.cantidad)
+            }
+        })
+
+        leche?.forEach(l => {
+            if (historyMap[l.fecha]) {
+                historyMap[l.fecha].leche += Number(l.litros)
+            }
+        })
+
+        return Object.values(historyMap).sort((a, b) => new Date(a.fecha) - new Date(b.fecha))
+
+    } catch (error) {
+        console.error('Error fetching history:', error)
+        return []
+    }
+}
+
+export const getFinancialHistory = async (userId, days = 30) => {
+    const today = new Date()
+    const startDate = new Date(today)
+    startDate.setDate(today.getDate() - days)
+    const startDateStr = startDate.toISOString().split('T')[0]
+
+    try {
+        // Fetch all financial data in one go (could be optimized but fine for now)
+        const [
+            { data: ingresosPollos },
+            { data: ventasGallinas },
+            { data: produccionLeche },
+            { data: gastosPollos },
+            { data: gastosGallinas },
+            { data: gastosVacas }
+        ] = await Promise.all([
+            supabase.from('ingresos_pollos').select('monto_total, fecha').gte('fecha', startDateStr),
+            supabase.from('ventas_gallinas').select('monto_total, fecha').gte('fecha', startDateStr),
+            supabase.from('produccion_leche').select('monto_total, fecha').gte('fecha', startDateStr),
+            supabase.from('gastos_pollos').select('monto, fecha').gte('fecha', startDateStr),
+            supabase.from('gastos_gallinas').select('monto, fecha').gte('fecha', startDateStr),
+            supabase.from('gastos_vacas').select('monto, fecha').gte('fecha', startDateStr)
+        ])
+
+        const historyMap = {}
+
+        // Initialize dates
+        for (let i = 0; i <= days; i++) {
+            const d = new Date(startDate)
+            d.setDate(startDate.getDate() + i)
+            const dateStr = d.toISOString().split('T')[0]
+            const shortDate = `${d.getDate()}/${d.getMonth() + 1}`
+
+            historyMap[dateStr] = {
+                fecha: dateStr,
+                shortDate,
+                ingresos: 0,
+                gastos: 0
+            }
+        }
+
+        // Helper to aggregate
+        const aggregate = (items, key, field) => {
+            items?.forEach(item => {
+                if (historyMap[item.fecha]) {
+                    historyMap[item.fecha][key] += Number(item[field] || 0)
+                }
+            })
+        }
+
+        aggregate(ingresosPollos, 'ingresos', 'monto_total')
+        aggregate(ventasGallinas, 'ingresos', 'monto_total')
+        aggregate(produccionLeche, 'ingresos', 'monto_total')
+
+        aggregate(gastosPollos, 'gastos', 'monto')
+        aggregate(gastosGallinas, 'gastos', 'monto')
+        aggregate(gastosVacas, 'gastos', 'monto')
+
+        return Object.values(historyMap).sort((a, b) => new Date(a.fecha) - new Date(b.fecha))
+
+    } catch (error) {
+        console.error('Error fetching financial history:', error)
+        return []
     }
 }

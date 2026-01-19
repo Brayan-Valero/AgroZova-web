@@ -15,22 +15,20 @@ const ContabilidadGeneral = () => {
     })
     const [movimientos, setMovimientos] = useState([])
     const [filtroFecha, setFiltroFecha] = useState('mes')
+    const [customStartDate, setCustomStartDate] = useState(new Date().toISOString().split('T')[0])
+    const [customEndDate, setCustomEndDate] = useState(new Date().toISOString().split('T')[0])
 
     useEffect(() => {
         loadData()
-    }, [user, filtroFecha])
+    }, [user, filtroFecha, customStartDate, customEndDate])
 
     const loadData = async () => {
         if (!user) return
         setLoading(true)
 
         try {
-            // 1. Cargar Estadísticas (ahora filtradas por fecha si se desea, por ahora usamos la general)
-            // TODO: Podríamos mejorar getDashboardStats para aceptar filtro de fecha también
-            // Por simplicidad, recalcularé totales basado en movimientos filtrados
-
-            const fechaFiltro = getFechaFiltro()
-            const todosMovimientos = await getFinancialMovements(user.id, fechaFiltro)
+            const { start, end } = getFechaFiltro()
+            const todosMovimientos = await getFinancialMovements(user.id, start, end)
 
             // Calcular stats locales basados en el filtro
             const ingresos = todosMovimientos.filter(m => m.tipo === 'ingreso').reduce((acc, m) => acc + (m.monto || 0), 0)
@@ -42,7 +40,7 @@ const ContabilidadGeneral = () => {
                 balance: ingresos - gastos
             })
 
-            setMovimientos(todosMovimientos.slice(0, 20)) // Mostrar últimos 20
+            setMovimientos(todosMovimientos)
 
         } catch (error) {
             console.error('Error loading contabilidad:', error)
@@ -52,6 +50,10 @@ const ContabilidadGeneral = () => {
     }
 
     const getFechaFiltro = () => {
+        if (filtroFecha === 'custom') {
+            return { start: customStartDate, end: customEndDate }
+        }
+
         const hoy = new Date()
         let fecha = new Date()
 
@@ -69,12 +71,68 @@ const ContabilidadGeneral = () => {
                 fecha.setMonth(hoy.getMonth() - 1)
         }
 
-        return fecha.toISOString().split('T')[0]
+        return { start: fecha.toISOString().split('T')[0], end: null }
     }
 
     const getPorcentajeCambio = (actual, anterior) => {
         if (!anterior) return 0
         return (((actual - anterior) / anterior) * 100).toFixed(1)
+    }
+
+    const exportToPDF = () => {
+        import('jspdf').then(jsPDF => {
+            import('jspdf-autotable').then(() => {
+                const doc = new jsPDF.default()
+
+                // Header
+                doc.setFontSize(18)
+                doc.text('Reporte Financiero - AgroZova', 14, 22)
+
+                doc.setFontSize(11)
+                doc.setTextColor(100)
+                const fechaTexto = filtroFecha === 'custom'
+                    ? `Del ${formatDateShort(customStartDate)} al ${formatDateShort(customEndDate)}`
+                    : `Reporte generado: ${new Date().toLocaleDateString()}`
+                doc.text(fechaTexto, 14, 30)
+
+                // Resumen
+                doc.autoTable({
+                    startY: 35,
+                    head: [['Concepto', 'Monto']],
+                    body: [
+                        ['Total Ingresos', formatCurrency(stats.ingresos)],
+                        ['Total Gastos', formatCurrency(stats.gastos)],
+                        ['Balance Neto', formatCurrency(stats.balance)]
+                    ],
+                    theme: 'plain',
+                    styles: { fontSize: 10, cellPadding: 2 },
+                    columnStyles: { 0: { fontStyle: 'bold' }, 1: { halign: 'right' } }
+                })
+
+                // Detalle Movimientos
+                doc.text('Detalle de Movimientos', 14, doc.lastAutoTable.finalY + 10)
+
+                const tableRows = movimientos.map(m => [
+                    formatDateShort(m.fecha),
+                    m.modulo,
+                    m.concepto,
+                    m.tipo === 'ingreso' ? 'Ingreso' : 'Gasto',
+                    m.tipo === 'ingreso' ? formatCurrency(m.monto) : `-${formatCurrency(m.monto)}`
+                ])
+
+                doc.autoTable({
+                    startY: doc.lastAutoTable.finalY + 15,
+                    head: [['Fecha', 'Módulo', 'Concepto', 'Tipo', 'Monto']],
+                    body: tableRows,
+                    theme: 'striped',
+                    styles: { fontSize: 9 },
+                    headStyles: { fillColor: [104, 137, 97] }, // primary color
+                    columnStyles: { 4: { halign: 'right' } }
+                })
+
+                doc.save(`reporte_financiero_${new Date().toISOString().split('T')[0]}.pdf`)
+            })
+        })
     }
 
     return (
@@ -89,7 +147,10 @@ const ContabilidadGeneral = () => {
                         <h2 className="text-[#121811] dark:text-white text-lg font-bold leading-tight tracking-tight">Contabilidad</h2>
                     </div>
                     <div className="flex items-center gap-2">
-                        <button className="flex items-center justify-center rounded-full w-10 h-10 bg-primary/10 text-[#121811] dark:text-white">
+                        <button
+                            onClick={exportToPDF}
+                            className="flex items-center justify-center rounded-full w-10 h-10 bg-primary/10 text-[#121811] dark:text-white hover:bg-primary/20 transition-colors"
+                        >
                             <span className="material-symbols-outlined">download</span>
                         </button>
                     </div>
@@ -117,7 +178,36 @@ const ContabilidadGeneral = () => {
                     >
                         <p className="text-sm font-semibold">Trimestre</p>
                     </button>
+                    <button
+                        onClick={() => setFiltroFecha('custom')}
+                        className={`flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-xl px-4 ${filtroFecha === 'custom' ? 'bg-primary text-white shadow-sm' : 'bg-white dark:bg-white/10 border border-gray-100 dark:border-gray-700 text-[#121811] dark:text-white'}`}
+                    >
+                        <span className="material-symbols-outlined text-[18px]">calendar_month</span>
+                    </button>
                 </div>
+
+                {filtroFecha === 'custom' && (
+                    <div className="flex gap-4 px-4 pb-4 animate-in fade-in slide-in-from-top-2">
+                        <div className="flex-1">
+                            <label className="text-xs text-[#688961] mb-1 block">Desde</label>
+                            <input
+                                type="date"
+                                value={customStartDate}
+                                onChange={(e) => setCustomStartDate(e.target.value)}
+                                className="w-full bg-white dark:bg-white/5 border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2 text-sm text-[#121811] dark:text-white"
+                            />
+                        </div>
+                        <div className="flex-1">
+                            <label className="text-xs text-[#688961] mb-1 block">Hasta</label>
+                            <input
+                                type="date"
+                                value={customEndDate}
+                                onChange={(e) => setCustomEndDate(e.target.value)}
+                                className="w-full bg-white dark:bg-white/5 border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2 text-sm text-[#121811] dark:text-white"
+                            />
+                        </div>
+                    </div>
+                )}
 
                 {/* Summary Stats */}
                 <div className="grid grid-cols-2 gap-4 px-4 pb-6">
