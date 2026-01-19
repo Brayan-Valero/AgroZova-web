@@ -1,8 +1,8 @@
 import { supabase } from './supabase'
-import { isDemo, demoService } from './demoStore'
+// import { isDemo, demoService } from './demoStore'
 
 export const getDashboardStats = async (userId) => {
-    if (isDemo()) {
+    /* if (isDemo()) {
         const { data: ingresosPollos } = await demoService.getAll('ingresos_pollos', userId)
         const { data: ventasGallinas } = await demoService.getAll('ventas_gallinas', userId)
         const { data: produccionLeche } = await demoService.getAll('produccion_leche', userId)
@@ -26,7 +26,7 @@ export const getDashboardStats = async (userId) => {
             gastos: totalGastos,
             balance: totalIngresos - totalGastos
         }
-    }
+    } */
 
     try {
         const { data: ingresosPollos } = await supabase.from('ingresos_pollos').select('monto_total')
@@ -65,7 +65,7 @@ export const getFinancialMovements = async (userId, filterDate) => {
         return new Date(dateStr) >= new Date(filterDateStr)
     }
 
-    if (isDemo()) {
+    /* if (isDemo()) {
         const { data: ingresosPollos } = await demoService.getAll('ingresos_pollos', userId)
         const { data: ventasGallinas } = await demoService.getAll('ventas_gallinas', userId)
         const { data: produccionLeche } = await demoService.getAll('produccion_leche', userId)
@@ -85,7 +85,7 @@ export const getFinancialMovements = async (userId, filterDate) => {
 
         todosMovimientos.sort((a, b) => new Date(b.fecha) - new Date(a.fecha))
         return todosMovimientos
-    }
+    } */
 
     try {
         const { data: ingresosPollos } = await supabase.from('ingresos_pollos').select('monto_total, fecha').gte('fecha', filterDate)
@@ -114,7 +114,7 @@ export const getFinancialMovements = async (userId, filterDate) => {
 }
 
 export const getInventoryStats = async (userId) => {
-    if (isDemo()) {
+    /* if (isDemo()) {
         const { data: pollos } = await demoService.getAll('producciones_pollos', userId)
         const { data: gallinas } = await demoService.getAll('lotes_gallinas', userId)
         const { data: vacas } = await demoService.getAll('inventario_vacas', userId)
@@ -124,7 +124,7 @@ export const getInventoryStats = async (userId) => {
             totalGallinas: gallinas?.reduce((acc, curr) => acc + Number(curr.poblacion_actual || 0), 0) || 0,
             totalVacas: vacas?.length || 0
         }
-    }
+    } */
 
     try {
         const { data: pollos } = await supabase.from('producciones_pollos').select('cantidad_actual').eq('user_id', userId).eq('estado', 'activo')
