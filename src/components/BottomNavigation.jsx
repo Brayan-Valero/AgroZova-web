@@ -31,13 +31,13 @@ const BottomNavigation = () => {
                     <span className="material-symbols-outlined">calculate</span>
                     <p className="text-[10px] font-medium leading-normal tracking-tight">Contabilidad</p>
                 </Link>
-                <button
-                    onClick={() => signOut()} // Assuming signOut handles navigation or just auth state
-                    className="flex flex-1 flex-col items-center justify-center gap-1 text-[#688961] dark:text-gray-400 hover:text-primary transition-colors"
+                <Link
+                    to="/perfil"
+                    className={`flex flex-1 flex-col items-center justify-center gap-1 transition-colors ${isActive('/perfil') ? 'text-primary' : 'text-[#688961] dark:text-gray-400 hover:text-primary'}`}
                 >
                     <span className="material-symbols-outlined">person</span>
                     <p className="text-[10px] font-medium leading-normal tracking-tight">Perfil</p>
-                </button>
+                </Link>
             </div>
         </nav>
     )

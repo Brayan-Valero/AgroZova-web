@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { signIn } from '../services/auth'
+import { signIn } from '../services/auth' // kept for reference, but actually using context
+// Clean up imports to match new usage
+
 
 const Login = () => {
     const navigate = useNavigate()
-    const { demoMode, demoSignIn } = useAuth()
+    const { signIn } = useAuth()
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [loading, setLoading] = useState(false)
@@ -16,19 +18,6 @@ const Login = () => {
         setLoading(true)
         setError(null)
 
-        // Use demo auth if in demo mode
-        if (demoMode) {
-            const result = demoSignIn(email, password)
-            if (result.error) {
-                setError(result.error.message)
-                setLoading(false)
-                return
-            }
-            navigate('/')
-            return
-        }
-
-        // Real Supabase auth
         const { data, error: signInError } = await signIn(email, password)
 
         if (signInError) {
@@ -73,15 +62,6 @@ const Login = () => {
                         <p className="text-[#121811] dark:text-gray-300 text-base font-normal leading-normal text-center pb-6">
                             Gestión agropecuaria profesional
                         </p>
-                        {demoMode && (
-                            <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300 px-4 py-3 rounded-lg text-sm text-center mb-4">
-                                <p className="font-bold">🎭 MODO DEMO</p>
-                                <p className="text-xs mt-1">
-                                    Email: <span className="font-mono">demo@agrozova.com</span><br />
-                                    Password: <span className="font-mono">demo123</span>
-                                </p>
-                            </div>
-                        )}
                     </div>
 
                     {/* Login Form */}
@@ -104,7 +84,7 @@ const Login = () => {
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
                                         className="form-input flex w-full rounded-lg text-[#121811] dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary border border-[#dde6db] dark:border-[#2a3f28] bg-white dark:bg-[#1a2e16] h-14 placeholder:text-[#688961] p-[15px] pl-11 text-base font-normal leading-normal"
-                                        placeholder={demoMode ? "demo@agrozova.com" : "usuario@gosena.com"}
+                                        placeholder="usuario@gosena.com"
                                         required
                                     />
                                     <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[#688961]">
@@ -121,11 +101,9 @@ const Login = () => {
                                     <p className="text-[#121811] dark:text-white text-sm font-semibold leading-normal">
                                         Contraseña
                                     </p>
-                                    {!demoMode && (
-                                        <a className="text-xs font-bold text-[#2d6a4f] dark:text-primary" href="#">
-                                            ¿Olvidó su contraseña?
-                                        </a>
-                                    )}
+                                    <a className="text-xs font-bold text-[#2d6a4f] dark:text-primary" href="#">
+                                        ¿Olvidó su contraseña?
+                                    </a>
                                 </div>
                                 <div className="relative">
                                     <input
@@ -133,7 +111,7 @@ const Login = () => {
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
                                         className="form-input flex w-full rounded-lg text-[#121811] dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary border border-[#dde6db] dark:border-[#2a3f28] bg-white dark:bg-[#1a2e16] h-14 placeholder:text-[#688961] p-[15px] pl-11 text-base font-normal leading-normal"
-                                        placeholder={demoMode ? "demo123" : "••••••••"}
+                                        placeholder="••••••••"
                                         required
                                     />
                                     <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[#688961]">
@@ -158,16 +136,10 @@ const Login = () => {
                     {/* Footer / Create Account */}
                     <div className="mt-auto py-8 text-center">
                         <p className="text-sm text-[#688961] dark## text-gray-400">
-                            {demoMode ? (
-                                <span>Modo demostración - Para producción, <a href="https://supabase.com" target="_blank" rel="noopener" className="font-bold text-primary">configura Supabase</a></span>
-                            ) : (
-                                <>
-                                    ¿No tiene una cuenta?{' '}
-                                    <a className="font-bold text-[#121811] dark:text-primary" href="#">
-                                        Contactar a soporte
-                                    </a>
-                                </>
-                            )}
+                            ¿No tiene una cuenta?{' '}
+                            <a className="font-bold text-[#121811] dark:text-primary" href="#">
+                                Contactar a soporte
+                            </a>
                         </p>
                         <div className="mt-4 flex items-center justify-center space-x-2 text-[#688961] opacity-50">
                             <span className="material-symbols-outlined text-sm">verified_user</span>

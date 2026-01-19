@@ -11,6 +11,7 @@ import VacasLecheras from './pages/VacasLecheras'
 import VacasDetalle from './pages/VacasDetalle'
 import ContabilidadGeneral from './pages/ContabilidadGeneral'
 import Reportes from './pages/Reportes'
+import Perfil from './pages/Perfil'
 
 function App() {
     return (
@@ -87,6 +88,14 @@ function App() {
                         element={
                             <ProtectedRoute>
                                 <VacasDetalle />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/perfil"
+                        element={
+                            <ProtectedRoute>
+                                <Perfil />
                             </ProtectedRoute>
                         }
                     />
