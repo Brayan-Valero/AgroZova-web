@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Contabilidad General - Gosén AgroZova SAS</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#37ec13",
+                        "background-light": "#f6f8f6",
+                        "background-dark": "#132210",
+                    },
+                    fontFamily: {
+                        "display": ["Manrope", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Manrope', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .ios-blur {
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-[#121811] dark:text-white font-display">
+<!-- Top Navigation Bar -->
+<header class="sticky top-0 z-50 bg-background-light/80 dark:bg-background-dark/80 ios-blur border-b border-gray-200 dark:border-gray-800">
+<div class="flex items-center p-4 pb-4 justify-between max-w-md mx-auto">
+<div class="flex items-center gap-3">
+<div class="text-[#121811] dark:text-white material-symbols-outlined cursor-pointer">arrow_back_ios</div>
+<h2 class="text-[#121811] dark:text-white text-lg font-bold leading-tight tracking-tight">Contabilidad</h2>
+</div>
+<div class="flex items-center gap-2">
+<button class="flex items-center justify-center rounded-full w-10 h-10 bg-primary/10 text-[#121811] dark:text-white">
+<span class="material-symbols-outlined">settings</span>
+</button>
+</div>
+</div>
+</header>
+<main class="max-w-md mx-auto pb-24">
+<!-- Quick Date Filters (Chips) -->
+<div class="flex gap-3 p-4 overflow-x-auto no-scrollbar">
+<button class="flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-xl bg-primary px-4 text-white shadow-sm">
+<p class="text-sm font-semibold">Este mes</p>
+<span class="material-symbols-outlined text-[20px]">expand_more</span>
+</button>
+<button class="flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-xl bg-white dark:bg-white/10 border border-gray-100 dark:border-gray-700 px-4">
+<p class="text-[#121811] dark:text-white text-sm font-medium">Semana</p>
+<span class="material-symbols-outlined text-[20px] text-gray-400">calendar_today</span>
+</button>
+<button class="flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-xl bg-white dark:bg-white/10 border border-gray-100 dark:border-gray-700 px-4">
+<p class="text-[#121811] dark:text-white text-sm font-medium">Personalizado</p>
+<span class="material-symbols-outlined text-[20px] text-gray-400">filter_list</span>
+</button>
+</div>
+<!-- Summary Stats -->
+<div class="grid grid-cols-2 gap-4 px-4 pb-6">
+<div class="flex flex-col gap-2 rounded-2xl p-5 bg-white dark:bg-white/5 border border-gray-100 dark:border-gray-800 shadow-sm">
+<div class="flex items-center gap-2 mb-1">
+<span class="material-symbols-outlined text-primary text-[20px]">arrow_downward</span>
+<p class="text-gray-500 dark:text-gray-400 text-xs font-bold uppercase tracking-wider">Ingresos</p>
+</div>
+<p class="text-[#121811] dark:text-white tracking-tight text-xl font-extrabold leading-tight">$4.250.000</p>
+<div class="flex items-center gap-1 mt-1">
+<span class="text-primary text-xs font-bold">+12.5%</span>
+<span class="text-gray-400 text-[10px]">vs mes ant.</span>
+</div>
+</div>
+<div class="flex flex-col gap-2 rounded-2xl p-5 bg-white dark:bg-white/5 border border-gray-100 dark:border-gray-800 shadow-sm">
+<div class="flex items-center gap-2 mb-1">
+<span class="material-symbols-outlined text-red-500 text-[20px]">arrow_upward</span>
+<p class="text-gray-500 dark:text-gray-400 text-xs font-bold uppercase tracking-wider">Gastos</p>
+</div>
+<p class="text-[#121811] dark:text-white tracking-tight text-xl font-extrabold leading-tight">$1.820.500</p>
+<div class="flex items-center gap-1 mt-1">
+<span class="text-red-500 text-xs font-bold">-4.2%</span>
+<span class="text-gray-400 text-[10px]">vs mes ant.</span>
+</div>
+</div>
+</div>
+<!-- Section Header -->
+<div class="flex items-center justify-between px-4 pb-2">
+<h3 class="text-[#121811] dark:text-white text-lg font-extrabold tracking-tight">Movimientos Recientes</h3>
+<button class="text-primary text-sm font-bold">Ver todos</button>
+</div>
+<!-- Transactions List -->
+<div class="px-4 space-y-1">
+<div class="text-[10px] font-bold text-gray-400 uppercase tracking-widest pt-4 pb-2">Hoy, 18 Oct</div>
+<!-- List Item 1 -->
+<div class="flex items-center gap-4 bg-white dark:bg-white/5 px-4 h-20 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm">
+<div class="flex items-center justify-center rounded-xl bg-primary/10 text-primary shrink-0 w-12 h-12">
+<span class="material-symbols-outlined">payments</span>
+</div>
+<div class="flex flex-col flex-1">
+<p class="text-[#121811] dark:text-white text-[15px] font-bold">Venta de Cacao (Batch A2)</p>
+<p class="text-gray-500 dark:text-gray-400 text-xs font-medium">Ingreso Directo • 10:45 AM</p>
+</div>
+<div class="text-right">
+<p class="text-primary text-[15px] font-extrabold">+$850.000</p>
+</div>
+</div>
+<!-- List Item 2 -->
+<div class="flex items-center gap-4 bg-white dark:bg-white/5 px-4 h-20 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm">
+<div class="flex items-center justify-center rounded-xl bg-red-100 dark:bg-red-900/20 text-red-500 shrink-0 w-12 h-12">
+<span class="material-symbols-outlined">agriculture</span>
+</div>
+<div class="flex flex-col flex-1">
+<p class="text-[#121811] dark:text-white text-[15px] font-bold">Fertilizantes Nitrox</p>
+<p class="text-gray-500 dark:text-gray-400 text-xs font-medium">Insumos • 08:30 AM</p>
+</div>
+<div class="text-right">
+<p class="text-[#121811] dark:text-white text-[15px] font-extrabold">-$245.000</p>
+</div>
+</div>
+<div class="text-[10px] font-bold text-gray-400 uppercase tracking-widest pt-6 pb-2">Ayer, 17 Oct</div>
+<!-- List Item 3 -->
+<div class="flex items-center gap-4 bg-white dark:bg-white/5 px-4 h-20 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm">
+<div class="flex items-center justify-center rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 shrink-0 w-12 h-12">
+<span class="material-symbols-outlined">engineering</span>
+</div>
+<div class="flex flex-col flex-1">
+<p class="text-[#121811] dark:text-white text-[15px] font-bold">Mantenimiento Tractor</p>
+<p class="text-gray-500 dark:text-gray-400 text-xs font-medium">Operativo • 04:15 PM</p>
+</div>
+<div class="text-right">
+<p class="text-[#121811] dark:text-white text-[15px] font-extrabold">-$120.000</p>
+</div>
+</div>
+<!-- List Item 4 -->
+<div class="flex items-center gap-4 bg-white dark:bg-white/5 px-4 h-20 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm">
+<div class="flex items-center justify-center rounded-xl bg-primary/10 text-primary shrink-0 w-12 h-12">
+<span class="material-symbols-outlined">storefront</span>
+</div>
+<div class="flex flex-col flex-1">
+<p class="text-[#121811] dark:text-white text-[15px] font-bold">Venta de Plátano</p>
+<p class="text-gray-500 dark:text-gray-400 text-xs font-medium">Mercado Local • 11:00 AM</p>
+</div>
+<div class="text-right">
+<p class="text-primary text-[15px] font-extrabold">+$320.000</p>
+</div>
+</div>
+</div>
+</main>
+<!-- Floating Action Button -->
+<div class="fixed bottom-6 right-6 max-w-md mx-auto w-full flex justify-end pr-6 pointer-events-none">
+<button class="pointer-events-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary text-white shadow-xl shadow-primary/20 hover:scale-105 active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-[32px]">add</span>
+</button>
+</div>
+<!-- Bottom Tab Bar (iOS style) -->
+<nav class="fixed bottom-0 left-0 right-0 bg-white/90 dark:bg-background-dark/90 ios-blur border-t border-gray-200 dark:border-gray-800 pb-5 pt-2">
+<div class="max-w-md mx-auto flex justify-around items-center">
+<div class="flex flex-col items-center gap-1">
+<span class="material-symbols-outlined text-gray-400">home</span>
+<span class="text-[10px] text-gray-400 font-bold">Inicio</span>
+</div>
+<div class="flex flex-col items-center gap-1">
+<span class="material-symbols-outlined text-primary">account_balance_wallet</span>
+<span class="text-[10px] text-primary font-bold">Balance</span>
+</div>
+<div class="flex flex-col items-center gap-1">
+<span class="material-symbols-outlined text-gray-400">potted_plant</span>
+<span class="text-[10px] text-gray-400 font-bold">Cultivos</span>
+</div>
+<div class="flex flex-col items-center gap-1">
+<span class="material-symbols-outlined text-gray-400">person</span>
+<span class="text-[10px] text-gray-400 font-bold">Perfil</span>
+</div>
+</div>
+</nav>
+</body></html>

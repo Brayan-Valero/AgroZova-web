@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Vacas Lecheras - Gosén AgroZova SAS</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#37ec13",
+                        "background-light": "#f6f8f6",
+                        "background-dark": "#132210",
+                    },
+                    fontFamily: {
+                        "display": ["Manrope", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            font-family: 'Manrope', sans-serif;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark min-h-screen">
+<div class="relative flex h-auto min-h-screen w-full flex-col group/design-root overflow-x-hidden max-w-md mx-auto bg-white dark:bg-background-dark shadow-xl">
+<!-- TopAppBar -->
+<header class="sticky top-0 z-50 bg-white/80 dark:bg-background-dark/80 backdrop-blur-md border-b border-gray-100 dark:border-gray-800">
+<div class="flex items-center p-4 pb-2 justify-between">
+<div class="text-gray-900 dark:text-white flex size-12 shrink-0 items-center">
+<span class="material-symbols-outlined">arrow_back_ios</span>
+</div>
+<h2 class="text-gray-900 dark:text-white text-lg font-bold leading-tight tracking-[-0.015em] flex-1 text-center">Vacas Lecheras</h2>
+<div class="flex w-12 items-center justify-end">
+<button class="flex size-10 cursor-pointer items-center justify-center overflow-hidden rounded-full bg-primary text-black transition-transform active:scale-95">
+<span class="material-symbols-outlined text-black">add</span>
+</button>
+</div>
+</div>
+</header>
+<!-- Quick Stats Summary (Detailed View Layout Inclusion) -->
+<div class="px-4 pt-4">
+<div class="grid grid-cols-2 gap-3">
+<div class="bg-primary/10 dark:bg-primary/20 p-4 rounded-xl border border-primary/20">
+<div class="flex items-center gap-2 mb-1">
+<span class="material-symbols-outlined text-primary text-sm">water_drop</span>
+<p class="text-gray-600 dark:text-gray-400 text-xs font-bold uppercase tracking-wider">Producción Hoy</p>
+</div>
+<p class="text-2xl font-extrabold text-gray-900 dark:text-white">842 L</p>
+<p class="text-[10px] text-green-600 font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-xs">trending_up</span> +5.2% vs ayer
+                    </p>
+</div>
+<div class="bg-red-50 dark:bg-red-900/20 p-4 rounded-xl border border-red-100 dark:border-red-900/30">
+<div class="flex items-center gap-2 mb-1">
+<span class="material-symbols-outlined text-red-500 text-sm">payments</span>
+<p class="text-gray-600 dark:text-gray-400 text-xs font-bold uppercase tracking-wider">Gastos Mes</p>
+</div>
+<p class="text-2xl font-extrabold text-gray-900 dark:text-white">$3.2M</p>
+<p class="text-[10px] text-gray-500 font-medium">Gosén AgroZova SAS</p>
+</div>
+</div>
+</div>
+<!-- SearchBar -->
+<div class="px-4 py-4">
+<label class="flex flex-col min-w-40 h-12 w-full">
+<div class="flex w-full flex-1 items-stretch rounded-xl h-full shadow-sm border border-gray-100 dark:border-gray-800">
+<div class="text-gray-400 flex bg-gray-50 dark:bg-gray-900 items-center justify-center pl-4 rounded-l-xl border-r-0">
+<span class="material-symbols-outlined">search</span>
+</div>
+<input class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-r-xl text-gray-900 dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary border-none bg-gray-50 dark:bg-gray-900 h-full placeholder:text-gray-400 px-4 pl-2 text-base font-medium" placeholder="Buscar por Nombre o ID" value=""/>
+</div>
+</label>
+</div>
+<!-- Chips / Filters -->
+<div class="flex gap-3 px-4 pb-2 overflow-x-auto no-scrollbar">
+<div class="flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-full bg-primary px-5 shadow-sm">
+<p class="text-black text-sm font-bold leading-normal">Todas</p>
+</div>
+<div class="flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 px-5 shadow-sm">
+<p class="text-gray-700 dark:text-gray-300 text-sm font-medium leading-normal">Producción</p>
+</div>
+<div class="flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 px-5 shadow-sm">
+<p class="text-gray-700 dark:text-gray-300 text-sm font-medium leading-normal">Secas</p>
+</div>
+<div class="flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 px-5 shadow-sm">
+<p class="text-gray-700 dark:text-gray-300 text-sm font-medium leading-normal">Enfermas</p>
+</div>
+</div>
+<!-- Inventory List -->
+<div class="flex flex-col gap-1 p-4">
+<!-- Card 1 -->
+<div class="flex items-stretch justify-between gap-4 rounded-xl bg-white dark:bg-gray-900 p-4 border border-gray-100 dark:border-gray-800 shadow-sm hover:shadow-md transition-shadow active:bg-gray-50 dark:active:bg-gray-800">
+<div class="flex flex-[2_2_0px] flex-col justify-between">
+<div class="flex flex-col gap-1">
+<div class="flex items-center justify-between">
+<p class="text-primary font-bold text-xs uppercase tracking-widest">ID: 402</p>
+<span class="flex h-2 w-2 rounded-full bg-green-500"></span>
+</div>
+<p class="text-gray-900 dark:text-white text-lg font-bold leading-tight">Vaca #402 - Lola</p>
+<p class="text-gray-500 dark:text-gray-400 text-sm font-medium">Estado: <span class="text-green-600 dark:text-green-400">Producción</span></p>
+</div>
+<button class="flex mt-4 min-w-[100px] cursor-pointer items-center justify-center rounded-lg h-9 px-4 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white gap-2 text-sm font-bold transition-colors">
+<span>Ver Detalle</span>
+<span class="material-symbols-outlined text-sm">chevron_right</span>
+</button>
+</div>
+<div class="w-32 h-32 bg-center bg-no-repeat bg-cover rounded-xl shrink-0" data-alt="Cerca de una vaca blanca y negra en pastizales verdes" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDKADJC-8BogGBeeOOptFZFia1aYoaH2-CqhfiKIx33V5C2i3lz-VRbaD_zaCyBLFDs3YH1PPkYmPisivzed5k3VxlNTA8N4D-O5wujtL_qtw6zaXAQBc-6MwoiTWxar92FmiD_X7OT6tEdX8pTkvRhYwqiYsviCFp9vakHICNE5feyiFiCUxuHUxskjVFLC9q2pjG6r9TELy__9yH1QozwZBGeH-grwUYbxU_ze10E5sfOMhPfeiJm_iczqFhlp10eDagnWYsdJIXh");'>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="flex items-stretch justify-between gap-4 rounded-xl bg-white dark:bg-gray-900 p-4 border border-gray-100 dark:border-gray-800 shadow-sm hover:shadow-md transition-shadow active:bg-gray-50 dark:active:bg-gray-800 mt-3">
+<div class="flex flex-[2_2_0px] flex-col justify-between">
+<div class="flex flex-col gap-1">
+<div class="flex items-center justify-between">
+<p class="text-primary font-bold text-xs uppercase tracking-widest">ID: 105</p>
+<span class="flex h-2 w-2 rounded-full bg-amber-500"></span>
+</div>
+<p class="text-gray-900 dark:text-white text-lg font-bold leading-tight">Vaca #105 - Bella</p>
+<p class="text-gray-500 dark:text-gray-400 text-sm font-medium">Estado: <span class="text-amber-600 dark:text-amber-400">Seca</span></p>
+</div>
+<button class="flex mt-4 min-w-[100px] cursor-pointer items-center justify-center rounded-lg h-9 px-4 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white gap-2 text-sm font-bold transition-colors">
+<span>Ver Detalle</span>
+<span class="material-symbols-outlined text-sm">chevron_right</span>
+</button>
+</div>
+<div class="w-32 h-32 bg-center bg-no-repeat bg-cover rounded-xl shrink-0" data-alt="Vaca de color marrón claro descansando en el campo" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCAOIJOCsTmg2jagi470yXN2_tY1EKMKlfc8x9L_PuOD11v12Ph-LGPSuwW_cuHkQQGEP0aOA02MP4anPGXnT03_IK5eqAne6k_acn8TvRjSVTjOgY7fG6YyhuFddX1TfjSVReav1S4rW4_1C3ZJuKgj6AiSucnSrO4hvD8bXgaBsUpBpsUQeMB-1h0-yBQr8nmGAz0kKWsT4FSc-PnpTgNraOEj5TDxLJcx3JoKJfwAMMx81F27zkSGR4vw7kRD1Nfh3TSAuKBw_Je");'>
+</div>
+</div>
+<!-- Card 3 (Sick/Emergency Highlight) -->
+<div class="flex items-stretch justify-between gap-4 rounded-xl bg-white dark:bg-gray-900 p-4 border-2 border-red-500/20 shadow-sm mt-3">
+<div class="flex flex-[2_2_0px] flex-col justify-between">
+<div class="flex flex-col gap-1">
+<div class="flex items-center justify-between">
+<p class="text-red-500 font-bold text-xs uppercase tracking-widest">ID: 088</p>
+<span class="flex h-2 w-2 rounded-full bg-red-500 animate-pulse"></span>
+</div>
+<p class="text-gray-900 dark:text-white text-lg font-bold leading-tight">Vaca #088 - Nube</p>
+<p class="text-gray-500 dark:text-gray-400 text-sm font-medium">Estado: <span class="text-red-600 font-bold">Enferma (Mastitis)</span></p>
+</div>
+<button class="flex mt-4 min-w-[100px] cursor-pointer items-center justify-center rounded-lg h-9 px-4 bg-red-50 dark:bg-red-900/40 text-red-600 dark:text-red-200 gap-2 text-sm font-bold">
+<span>Ver Alerta</span>
+<span class="material-symbols-outlined text-sm">warning</span>
+</button>
+</div>
+<div class="w-32 h-32 bg-center bg-no-repeat bg-cover rounded-xl shrink-0 opacity-80" data-alt="Retrato de una vaca blanca en un establo" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBsBjnMokbLnvFFmBr0SdDLfxRSiux-8Q_CmzFzW08nifechSN3PWD6Kychn-P88etL7JBT47gRDoVKViIUaC3BKTMKgoW-qTbyCo3w1tM9y16y9ts65Fpy7RqiqTtfBnGCnOeg3CSrBQy_2vXRzMiueM12Du3jj55hBkcUQJUP54QJHw8TscCHi7YgxZEthtbBVCGrkSLIkieicMd7-WDQVBIMqy81yooLQdNIrqUwpTuCeMLbBpz6o3CPiu143M9VnWNUeUln17pa");'>
+</div>
+</div>
+</div>
+<!-- Sync Indicator (Sticky Bottom) -->
+<div class="mt-auto p-4 flex justify-center items-center gap-2 text-gray-400 dark:text-gray-600">
+<span class="material-symbols-outlined text-xs">cloud_done</span>
+<span class="text-[10px] font-bold uppercase tracking-widest">Sincronizado: Justo ahora</span>
+</div>
+<div class="h-20 bg-white dark:bg-background-dark"></div>
+</div>
+<!-- Bottom Navigation Mockup (iOS Style) -->
+<nav class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-white/90 dark:bg-background-dark/90 backdrop-blur-xl border-t border-gray-100 dark:border-gray-800 px-6 py-3 flex justify-between items-center z-50">
+<div class="flex flex-col items-center gap-1 text-primary">
+<span class="material-symbols-outlined">pets</span>
+<span class="text-[10px] font-bold">Ganado</span>
+</div>
+<div class="flex flex-col items-center gap-1 text-gray-400">
+<span class="material-symbols-outlined">analytics</span>
+<span class="text-[10px] font-medium">Reportes</span>
+</div>
+<div class="flex flex-col items-center gap-1 text-gray-400">
+<span class="material-symbols-outlined">calendar_today</span>
+<span class="text-[10px] font-medium">Tareas</span>
+</div>
+<div class="flex flex-col items-center gap-1 text-gray-400">
+<span class="material-symbols-outlined">settings</span>
+<span class="text-[10px] font-medium">Ajustes</span>
+</div>
+</nav>
+</body></html>

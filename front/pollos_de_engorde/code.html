@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Pollos de Engorde - Gosén AgroZova SAS</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#37ec13",
+                        "background-light": "#f6f8f6",
+                        "background-dark": "#132210",
+                    },
+                    fontFamily: {
+                        "display": ["Manrope"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Manrope', sans-serif;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-[#121811] dark:text-gray-100 min-h-screen">
+<div class="relative flex h-full min-h-screen w-full flex-col overflow-x-hidden">
+<!-- TopAppBar -->
+<header class="sticky top-0 z-10 flex items-center bg-white dark:bg-background-dark p-4 pb-2 justify-between border-b border-gray-100 dark:border-gray-800">
+<div class="text-[#121811] dark:text-gray-100 flex size-12 shrink-0 items-center justify-start">
+<span class="material-symbols-outlined">menu</span>
+</div>
+<h2 class="text-[#121811] dark:text-gray-100 text-lg font-bold leading-tight tracking-[-0.015em] flex-1 text-center">Pollos de Engorde</h2>
+<div class="text-[#121811] dark:text-gray-100 flex size-12 shrink-0 items-center justify-end">
+<span class="material-symbols-outlined">account_circle</span>
+</div>
+</header>
+<!-- SearchBar -->
+<div class="px-4 py-3">
+<label class="flex flex-col min-w-40 h-12 w-full">
+<div class="flex w-full flex-1 items-stretch rounded-lg h-full">
+<div class="text-[#688961] dark:text-primary flex border-none bg-white dark:bg-gray-800 items-center justify-center pl-4 rounded-l-lg" data-icon="MagnifyingGlass">
+<span class="material-symbols-outlined">search</span>
+</div>
+<input class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-[#121811] dark:text-white focus:outline-0 focus:ring-0 border-none bg-white dark:bg-gray-800 focus:border-none h-full placeholder:text-[#688961] px-4 rounded-l-none border-l-0 pl-2 text-base font-normal leading-normal" placeholder="Buscar lotes de producción..." value=""/>
+</div>
+</label>
+</div>
+<!-- Filter Chips -->
+<div class="flex gap-3 p-4 overflow-x-auto no-scrollbar">
+<div class="flex h-8 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-primary px-4">
+<p class="text-black text-sm font-semibold leading-normal">Todos</p>
+</div>
+<div class="flex h-8 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-white dark:bg-gray-800 px-4 border border-gray-100 dark:border-gray-700">
+<p class="text-[#121811] dark:text-gray-300 text-sm font-medium leading-normal">Activos</p>
+</div>
+<div class="flex h-8 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-white dark:bg-gray-800 px-4 border border-gray-100 dark:border-gray-700">
+<p class="text-[#121811] dark:text-gray-300 text-sm font-medium leading-normal">Finalizados</p>
+</div>
+</div>
+<!-- Content Area / Batch List -->
+<div class="flex flex-col gap-1 pb-24">
+<!-- Active Card 1 -->
+<div class="p-4 py-2">
+<div class="flex items-stretch justify-between gap-4 rounded-xl bg-white dark:bg-gray-800 p-4 shadow-sm border border-gray-100 dark:border-gray-700">
+<div class="flex flex-[2_2_0px] flex-col justify-between gap-3">
+<div class="flex flex-col gap-1">
+<div class="flex items-center gap-2">
+<span class="flex size-2 rounded-full bg-primary"></span>
+<p class="text-primary text-xs font-bold uppercase tracking-wider">Activo</p>
+</div>
+<p class="text-[#121811] dark:text-white text-lg font-bold leading-tight">Lote A-24 - Galpón Norte</p>
+<div class="flex items-center gap-1 text-[#688961] dark:text-gray-400">
+<span class="material-symbols-outlined text-sm">nest_multi_room</span>
+<p class="text-sm font-normal leading-normal">500 pollos</p>
+</div>
+</div>
+<button class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-9 px-4 bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary font-bold text-sm leading-normal w-fit">
+<span class="truncate">Ver Detalles</span>
+</button>
+</div>
+<div class="w-24 h-24 sm:w-32 sm:h-auto bg-center bg-no-repeat bg-cover rounded-lg" data-alt="Chickens in a clean modern poultry farm" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuC1LewolPDNmYUA3uWf1Wt1VVO4hLyAbtU8jCmGU0kLGr3iPxw_BBAplFixqOQJuvEj9Qb9VdjrL3n0Ct0PyLr6GD4KR4TV4zQnF9O_klmW_wbCTivNaO8HamvroEgGD14EZRm2X1wFCdoHwLD9F6wRvK_e-gnIuvY6gAF7AOdE6vcdzvfw6rYQi43ThIfQ14ZYvDYV0LmKOyo3SsyRBZZA9HA5PrAVHZ97Nl0lwTat2NKknoPNpb-8z2v65aCgltURdREgxnrxzR-2");'></div>
+</div>
+</div>
+<!-- Active Card 2 -->
+<div class="p-4 py-2">
+<div class="flex items-stretch justify-between gap-4 rounded-xl bg-white dark:bg-gray-800 p-4 shadow-sm border border-gray-100 dark:border-gray-700">
+<div class="flex flex-[2_2_0px] flex-col justify-between gap-3">
+<div class="flex flex-col gap-1">
+<div class="flex items-center gap-2">
+<span class="flex size-2 rounded-full bg-primary"></span>
+<p class="text-primary text-xs font-bold uppercase tracking-wider">Activo</p>
+</div>
+<p class="text-[#121811] dark:text-white text-lg font-bold leading-tight">Lote C-12 - Fase Inicial</p>
+<div class="flex items-center gap-1 text-[#688961] dark:text-gray-400">
+<span class="material-symbols-outlined text-sm">nest_multi_room</span>
+<p class="text-sm font-normal leading-normal">420 pollos</p>
+</div>
+</div>
+<button class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-9 px-4 bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary font-bold text-sm leading-normal w-fit">
+<span class="truncate">Ver Detalles</span>
+</button>
+</div>
+<div class="w-24 h-24 sm:w-32 sm:h-auto bg-center bg-no-repeat bg-cover rounded-lg" data-alt="Group of young yellow broiler chicks" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCy8Q4_JFSWe5xGtmh-ftqApUHAiM21YYJR4Nm9r_8jN3pEt3OOdNuf1hGJicadhfP4RH58z1cb8bEB-mwVrclNQlaSHn6STb4eTrtHvlBH-gBtpa68CXwYahSAFjE4ion4_tATPyaJFIuO4kUaf4wPQV4w2zknEqtuQa_KJXpqRyueS0bfLwcDVjqWbc9YjzXUPKBt7DvRcwqE6K1TPpKWb0x7wfsB_lo-Czfdii33j654CFu13STdPcO5KDf_jvAXjZvhzUiNUapo");'></div>
+</div>
+</div>
+<!-- Finished Card -->
+<div class="p-4 py-2">
+<div class="flex items-stretch justify-between gap-4 rounded-xl bg-white dark:bg-gray-800 p-4 shadow-sm border border-gray-100 dark:border-gray-700 opacity-80">
+<div class="flex flex-[2_2_0px] flex-col justify-between gap-3">
+<div class="flex flex-col gap-1">
+<div class="flex items-center gap-2">
+<span class="flex size-2 rounded-full bg-gray-400"></span>
+<p class="text-gray-500 text-xs font-bold uppercase tracking-wider">Finalizado</p>
+</div>
+<p class="text-[#121811] dark:text-white text-lg font-bold leading-tight">Lote B-23 - Histórico</p>
+<div class="flex items-center gap-1 text-[#688961] dark:text-gray-400">
+<span class="material-symbols-outlined text-sm">history</span>
+<p class="text-sm font-normal leading-normal">480 pollos finalizados</p>
+</div>
+</div>
+<button class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-9 px-4 bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 font-medium text-sm leading-normal w-fit">
+<span class="truncate">Ver Resumen</span>
+</button>
+</div>
+<div class="w-24 h-24 sm:w-32 sm:h-auto bg-center bg-no-repeat bg-cover rounded-lg grayscale" data-alt="Empty clean poultry house after harvest" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBVksmVhfvWHk3t67KcpLY9jSKnOhvY0jF351QoN5zLA5yibA5SwfHKWYQDMANuxtmJzzevY7ef8LYA9vQccS8WLY-TgUB6PdMBKH4fR5OwkGjTi8yzvDFzb3zlXupV6-Is5-47X5BbOU0QBoarqlBvoE6AXvfyz5NnQjWHU_AzJhwomAH0zttMsE9m3ZsZzuYJaIuJmBU8RdUiFgQT9VM4g_qo79r2O7MZGOB6mbX8T1d_0scEBIh_D11Gd-94FeIUjMUmvE9Uc8nn");'></div>
+</div>
+</div>
+</div>
+<!-- Floating Action Button -->
+<button class="fixed bottom-6 right-6 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-black shadow-lg hover:scale-105 active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-3xl font-bold">add</span>
+</button>
+<!-- iOS Style Bottom Tab Bar (Contextual) -->
+<nav class="fixed bottom-0 w-full bg-white dark:bg-background-dark border-t border-gray-200 dark:border-gray-800 flex justify-around py-2 px-4 z-20">
+<div class="flex flex-col items-center gap-1 text-primary">
+<span class="material-symbols-outlined">grid_view</span>
+<span class="text-[10px] font-bold">Producción</span>
+</div>
+<div class="flex flex-col items-center gap-1 text-gray-400">
+<span class="material-symbols-outlined">analytics</span>
+<span class="text-[10px] font-medium">Reportes</span>
+</div>
+<div class="flex flex-col items-center gap-1 text-gray-400">
+<span class="material-symbols-outlined">inventory_2</span>
+<span class="text-[10px] font-medium">Insumos</span>
+</div>
+<div class="flex flex-col items-center gap-1 text-gray-400">
+<span class="material-symbols-outlined">settings</span>
+<span class="text-[10px] font-medium">Ajustes</span>
+</div>
+</nav>
+</div>
+</body></html>
