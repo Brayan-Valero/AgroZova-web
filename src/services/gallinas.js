@@ -1,11 +1,11 @@
 import { supabase } from './supabase'
-import { isDemo, demoService } from './demoStore'
+// import { isDemo, demoService } from './demoStore'
 
 /**
  * Obtener todos los lotes de gallinas del usuario
  */
 export const getLotes = async (userId) => {
-    if (isDemo()) return demoService.getAll('lotes_gallinas', userId)
+    // if (isDemo()) return demoService.getAll('lotes_gallinas', userId)
 
     try {
         const { data, error } = await supabase
@@ -26,7 +26,7 @@ export const getLotes = async (userId) => {
  * Obtener un lote por ID
  */
 export const getLoteById = async (id) => {
-    if (isDemo()) return demoService.getById('lotes_gallinas', id)
+    // if (isDemo()) return demoService.getById('lotes_gallinas', id)
 
     try {
         const { data, error } = await supabase
@@ -47,7 +47,7 @@ export const getLoteById = async (id) => {
  * Crear nuevo lote de gallinas
  */
 export const createLote = async (loteData) => {
-    if (isDemo()) return demoService.create('lotes_gallinas', loteData)
+    // if (isDemo()) return demoService.create('lotes_gallinas', loteData)
 
     try {
         const { data, error } = await supabase
@@ -68,7 +68,7 @@ export const createLote = async (loteData) => {
  * Actualizar lote existente
  */
 export const updateLote = async (id, updates) => {
-    if (isDemo()) return demoService.update('lotes_gallinas', id, updates)
+    // if (isDemo()) return demoService.update('lotes_gallinas', id, updates)
 
     try {
         const { data, error } = await supabase
@@ -90,7 +90,7 @@ export const updateLote = async (id, updates) => {
  * Eliminar lote
  */
 export const deleteLote = async (id) => {
-    if (isDemo()) return demoService.delete('lotes_gallinas', id)
+    // if (isDemo()) return demoService.delete('lotes_gallinas', id)
 
     try {
         const { error } = await supabase
@@ -110,7 +110,7 @@ export const deleteLote = async (id) => {
  * Obtener gastos de un lote
  */
 export const getGastosByLote = async (loteId) => {
-    if (isDemo()) return demoService.getByForeignKey('gastos_gallinas', 'lote_id', loteId)
+    // if (isDemo()) return demoService.getByForeignKey('gastos_gallinas', 'lote_id', loteId)
 
     try {
         const { data, error } = await supabase
@@ -131,7 +131,7 @@ export const getGastosByLote = async (loteId) => {
  * Crear gasto para un lote
  */
 export const createGasto = async (gastoData) => {
-    if (isDemo()) return demoService.create('gastos_gallinas', gastoData)
+    // if (isDemo()) return demoService.create('gastos_gallinas', gastoData)
 
     try {
         const { data, error } = await supabase
@@ -152,7 +152,7 @@ export const createGasto = async (gastoData) => {
  * Obtener ventas de un lote
  */
 export const getVentasByLote = async (loteId) => {
-    if (isDemo()) return demoService.getByForeignKey('ventas_gallinas', 'lote_id', loteId)
+    // if (isDemo()) return demoService.getByForeignKey('ventas_gallinas', 'lote_id', loteId)
 
     try {
         const { data, error } = await supabase
@@ -173,7 +173,7 @@ export const getVentasByLote = async (loteId) => {
  * Registrar venta de huevos
  */
 export const createVenta = async (ventaData) => {
-    if (isDemo()) return demoService.create('ventas_gallinas', ventaData)
+    // if (isDemo()) return demoService.create('ventas_gallinas', ventaData)
 
     try {
         const { data, error } = await supabase

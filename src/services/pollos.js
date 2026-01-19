@@ -1,11 +1,11 @@
 import { supabase } from './supabase'
-import { isDemo, demoService } from './demoStore'
+// import { isDemo, demoService } from './demoStore'
 
 /**
  * Obtener todas las producciones de pollos del usuario
  */
 export const getProducciones = async (userId) => {
-    if (isDemo()) return demoService.getAll('producciones_pollos', userId)
+    // if (isDemo()) return demoService.getAll('producciones_pollos', userId)
 
     try {
         const { data, error } = await supabase
@@ -25,7 +25,7 @@ export const getProducciones = async (userId) => {
  * Obtener una producción por ID
  */
 export const getProduccionById = async (id) => {
-    if (isDemo()) return demoService.getById('producciones_pollos', id)
+    // if (isDemo()) return demoService.getById('producciones_pollos', id)
 
     try {
         const { data, error } = await supabase
@@ -46,7 +46,7 @@ export const getProduccionById = async (id) => {
  * Crear nueva producción de pollos
  */
 export const createProduccion = async (produccionData) => {
-    if (isDemo()) return demoService.create('producciones_pollos', produccionData)
+    // if (isDemo()) return demoService.create('producciones_pollos', produccionData)
 
     try {
         const { data, error } = await supabase
@@ -67,7 +67,7 @@ export const createProduccion = async (produccionData) => {
  * Actualizar producción existente
  */
 export const updateProduccion = async (id, updates) => {
-    if (isDemo()) return demoService.update('producciones_pollos', id, updates)
+    // if (isDemo()) return demoService.update('producciones_pollos', id, updates)
 
     try {
         const { data, error } = await supabase
@@ -89,7 +89,7 @@ export const updateProduccion = async (id, updates) => {
  * Eliminar producción
  */
 export const deleteProduccion = async (id) => {
-    if (isDemo()) return demoService.delete('producciones_pollos', id)
+    // if (isDemo()) return demoService.delete('producciones_pollos', id)
 
     try {
         const { error } = await supabase
@@ -109,7 +109,7 @@ export const deleteProduccion = async (id) => {
  * Obtener gastos de una producción
  */
 export const getGastosByProduccion = async (produccionId) => {
-    if (isDemo()) return demoService.getByForeignKey('gastos_pollos', 'produccion_id', produccionId)
+    // if (isDemo()) return demoService.getByForeignKey('gastos_pollos', 'produccion_id', produccionId)
 
     try {
         const { data, error } = await supabase
@@ -130,7 +130,7 @@ export const getGastosByProduccion = async (produccionId) => {
  * Crear gasto para una producción
  */
 export const createGasto = async (gastoData) => {
-    if (isDemo()) return demoService.create('gastos_pollos', gastoData)
+    // if (isDemo()) return demoService.create('gastos_pollos', gastoData)
 
     try {
         const { data, error } = await supabase
@@ -151,7 +151,7 @@ export const createGasto = async (gastoData) => {
  * Obtener ingresos de una producción
  */
 export const getIngresosByProduccion = async (produccionId) => {
-    if (isDemo()) return demoService.getByForeignKey('ingresos_pollos', 'produccion_id', produccionId)
+    // if (isDemo()) return demoService.getByForeignKey('ingresos_pollos', 'produccion_id', produccionId)
 
     try {
         const { data, error } = await supabase
@@ -172,7 +172,7 @@ export const getIngresosByProduccion = async (produccionId) => {
  * Crear ingreso para una producción
  */
 export const createIngreso = async (ingresoData) => {
-    if (isDemo()) return demoService.create('ingresos_pollos', ingresoData)
+    // if (isDemo()) return demoService.create('ingresos_pollos', ingresoData)
 
     try {
         const { data, error } = await supabase

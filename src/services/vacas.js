@@ -1,11 +1,11 @@
 import { supabase } from './supabase'
-import { isDemo, demoService } from './demoStore'
+// import { isDemo, demoService } from './demoStore'
 
 /**
  * Obtener inventario de vacas del usuario
  */
 export const getVacas = async (userId) => {
-    if (isDemo()) return demoService.getAll('inventario_vacas', userId)
+    // if (isDemo()) return demoService.getAll('inventario_vacas', userId)
 
     try {
         const { data, error } = await supabase
@@ -25,7 +25,7 @@ export const getVacas = async (userId) => {
  * Obtener una vaca por ID
  */
 export const getVacaById = async (id) => {
-    if (isDemo()) return demoService.getById('inventario_vacas', id)
+    // if (isDemo()) return demoService.getById('inventario_vacas', id)
 
     try {
         const { data, error } = await supabase
@@ -46,7 +46,7 @@ export const getVacaById = async (id) => {
  * Obtener producción de leche de una vaca
  */
 export const getProduccionLecheByVaca = async (vacaId) => {
-    if (isDemo()) return demoService.getByForeignKey('produccion_leche', 'vaca_id', vacaId)
+    // if (isDemo()) return demoService.getByForeignKey('produccion_leche', 'vaca_id', vacaId)
 
     try {
         const { data, error } = await supabase
@@ -67,7 +67,7 @@ export const getProduccionLecheByVaca = async (vacaId) => {
  * Crear nueva vaca en inventario
  */
 export const createVaca = async (vacaData) => {
-    if (isDemo()) return demoService.create('inventario_vacas', vacaData)
+    // if (isDemo()) return demoService.create('inventario_vacas', vacaData)
 
     try {
         const { data, error } = await supabase
@@ -88,7 +88,7 @@ export const createVaca = async (vacaData) => {
  * Actualizar información de vaca
  */
 export const updateVaca = async (id, updates) => {
-    if (isDemo()) return demoService.update('inventario_vacas', id, updates)
+    // if (isDemo()) return demoService.update('inventario_vacas', id, updates)
 
     try {
         const { data, error } = await supabase
@@ -110,7 +110,7 @@ export const updateVaca = async (id, updates) => {
  * Eliminar vaca del inventario
  */
 export const deleteVaca = async (id) => {
-    if (isDemo()) return demoService.delete('inventario_vacas', id)
+    // if (isDemo()) return demoService.delete('inventario_vacas', id)
 
     try {
         const { error } = await supabase
@@ -130,7 +130,7 @@ export const deleteVaca = async (id) => {
  * Obtener gastos de una vaca
  */
 export const getGastosByVaca = async (vacaId) => {
-    if (isDemo()) return demoService.getByForeignKey('gastos_vacas', 'vaca_id', vacaId)
+    // if (isDemo()) return demoService.getByForeignKey('gastos_vacas', 'vaca_id', vacaId)
 
     try {
         const { data, error } = await supabase
@@ -151,7 +151,7 @@ export const getGastosByVaca = async (vacaId) => {
  * Crear gasto para una vaca
  */
 export const createGasto = async (gastoData) => {
-    if (isDemo()) return demoService.create('gastos_vacas', gastoData)
+    // if (isDemo()) return demoService.create('gastos_vacas', gastoData)
 
     try {
         const { data, error } = await supabase
@@ -172,7 +172,7 @@ export const createGasto = async (gastoData) => {
  * Obtener producción de leche de una vaca
  */
 export const getProduccionByVaca = async (vacaId) => {
-    if (isDemo()) return demoService.getByForeignKey('produccion_leche', 'vaca_id', vacaId)
+    // if (isDemo()) return demoService.getByForeignKey('produccion_leche', 'vaca_id', vacaId)
 
     try {
         const { data, error } = await supabase
@@ -193,7 +193,7 @@ export const getProduccionByVaca = async (vacaId) => {
  * Registrar producción de leche
  */
 export const createProduccion = async (produccionData) => {
-    if (isDemo()) return demoService.create('produccion_leche', produccionData)
+    // if (isDemo()) return demoService.create('produccion_leche', produccionData)
 
     try {
         const { data, error } = await supabase
