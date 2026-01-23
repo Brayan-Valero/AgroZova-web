@@ -211,6 +211,26 @@ export const createProduccion = async (produccionData) => {
 }
 
 /**
+ * Actualizar producción de leche
+ */
+export const updateProduccionLeche = async (id, updates) => {
+    try {
+        const { data, error } = await supabase
+            .from('produccion_leche')
+            .update(updates)
+            .eq('id', id)
+            .select()
+            .single()
+
+        if (error) throw error
+        return { data, error: null }
+    } catch (error) {
+        console.error('Error updating produccion leche:', error)
+        return { data: null, error }
+    }
+}
+
+/**
  * Calcular rentabilidad de una vaca
  */
 export const calcularRentabilidad = async (vacaId) => {

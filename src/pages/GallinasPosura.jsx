@@ -2,7 +2,9 @@ import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { getLotes, createLote, deleteLote, createVenta, createGasto } from '../services/gallinas'
+import { getAllRecentClients } from '../services/clients'
 import { formatCurrency } from '../utils/formatters'
+import BottomNavigation from '../components/BottomNavigation'
 
 const GallinasPosura = () => {
     const { user } = useAuth()
@@ -13,6 +15,7 @@ const GallinasPosura = () => {
     const [showFormVenta, setShowFormVenta] = useState(false)
     const [selectedLote, setSelectedLote] = useState(null)
     const [unidadMedida, setUnidadMedida] = useState('carton')
+    const [recentClients, setRecentClients] = useState([])
 
     const [formLote, setFormLote] = useState({
         nombre: '',
@@ -23,12 +26,20 @@ const GallinasPosura = () => {
 
     const [formVenta, setFormVenta] = useState({
         cantidad: '',
-        precio_unitario: ''
+        precio_unitario: 18000,
+        estado_pago: 'debe'
     })
 
     useEffect(() => {
         loadLotes()
+        loadClients()
     }, [user])
+
+    const loadClients = async () => {
+        if (!user) return
+        const { data } = await getAllRecentClients(user.id)
+        setRecentClients(data || [])
+    }
 
     const loadLotes = async () => {
         if (!user) return
@@ -68,14 +79,22 @@ const GallinasPosura = () => {
             cantidad: parseInt(formVenta.cantidad),
             precio_unitario: parseFloat(formVenta.precio_unitario),
             monto_total: montoTotal,
+            estado_pago: formVenta.estado_pago,
+            concepto: `Venta de huevos (${unidadMedida === 'carton' ? 'Cartones' : 'Unidades'})`,
+            user_id: user.id,
             fecha: new Date().toISOString().split('T')[0]
         })
 
         if (!error) {
             setShowFormVenta(false)
-            setFormVenta({ cantidad: '', precio_unitario: '' })
+            setFormVenta({
+                cantidad: '',
+                precio_unitario: unidadMedida === 'carton' ? 18000 : 700,
+                estado_pago: 'debe'
+            })
             setSelectedLote(null)
             loadLotes()
+            loadClients()
         }
     }
 
@@ -280,19 +299,39 @@ const GallinasPosura = () => {
                                     <div className="flex bg-[#dde6db] dark:bg-[#2a3528] p-1 rounded-lg">
                                         <button
                                             type="button"
-                                            onClick={() => setUnidadMedida('carton')}
+                                            onClick={() => {
+                                                setUnidadMedida('carton')
+                                                setFormVenta({ ...formVenta, precio_unitario: 18000 })
+                                            }}
                                             className={`flex-1 py-2 text-sm font-bold rounded-md ${unidadMedida === 'carton' ? 'bg-white dark:bg-primary dark:text-black shadow-sm' : 'text-[#688961] dark:text-gray-400'}`}
                                         >
                                             Cartón (30)
                                         </button>
                                         <button
                                             type="button"
-                                            onClick={() => setUnidadMedida('unidad')}
+                                            onClick={() => {
+                                                setUnidadMedida('unidad')
+                                                setFormVenta({ ...formVenta, precio_unitario: 700 })
+                                            }}
                                             className={`flex-1 py-2 text-sm font-bold rounded-md ${unidadMedida === 'unidad' ? 'bg-white dark:bg-primary dark:text-black shadow-sm' : 'text-[#688961] dark:text-gray-400'}`}
                                         >
                                             Unidad
                                         </button>
                                     </div>
+                                </div>
+
+
+
+                                <div>
+                                    <label className="block text-xs font-bold text-[#688961] uppercase mb-2">Estado de Pago</label>
+                                    <select
+                                        value={formVenta.estado_pago}
+                                        onChange={(e) => setFormVenta({ ...formVenta, estado_pago: e.target.value })}
+                                        className="w-full bg-white dark:bg-[#0a1108] border border-[#dde6db] dark:border-[#2a3528] rounded-lg p-3 text-[#121811] dark:text-white"
+                                    >
+                                        <option value="pagado">Pagado (Caja)</option>
+                                        <option value="debe">Crédito (Debe)</option>
+                                    </select>
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-4">
@@ -338,7 +377,8 @@ const GallinasPosura = () => {
                 )}
 
                 {/* Bottom safe area */}
-                <div className="h-8 bg-white dark:bg-[#0a1108]"></div>
+                <div className="h-20"></div>
+                <BottomNavigation />
             </div>
         </div>
     )

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { getLoteById, getGastosByLote, getVentasByLote } from '../services/gallinas'
+import { getLoteById, getGastosByLote, getVentasByLote, updateVenta } from '../services/gallinas'
 import { formatCurrency, formatDateShort } from '../utils/formatters'
 import BottomNavigation from '../components/BottomNavigation'
 
@@ -30,12 +30,20 @@ const GallinasDetalle = () => {
         setLoading(false)
     }
 
-    const totalGastos = gastos.reduce((acc, g) => acc + (g.monto || 0), 0)
-    const totalVentas = ventas.reduce((acc, v) => acc + (v.monto_total || 0), 0)
-    const balance = totalVentas - totalGastos
+    const handleMarkAsPaid = async (ventaId) => {
+        const { error } = await updateVenta(ventaId, { estado_pago: 'pagado' })
+        if (!error) {
+            loadData()
+        }
+    }
 
     if (loading) return <div className="p-8 text-center">Cargando...</div>
     if (!lote) return <div className="p-8 text-center">Lote no encontrado</div>
+
+    const totalGastos = gastos.reduce((acc, g) => acc + (g.monto || 0), 0)
+    const totalVentas = ventas.reduce((acc, v) => acc + (v.monto_total || 0), 0)
+    const totalPorCobrar = ventas.filter(v => v.estado_pago === 'debe').reduce((acc, v) => acc + (v.monto_total || 0), 0)
+    const balance = (totalVentas - totalPorCobrar) - totalGastos
 
     return (
         <div className="bg-background-light dark:bg-background-dark min-h-screen flex flex-col font-display">
@@ -57,18 +65,22 @@ const GallinasDetalle = () => {
             </header>
 
             {/* Quick Stats Header */}
-            <div className="bg-white dark:bg-white/5 p-4 border-b border-gray-100 dark:border-white/10 grid grid-cols-3 divide-x divide-gray-100 dark:divide-white/10">
-                <div className="px-2 text-center">
-                    <p className="text-[10px] uppercase text-gray-500 font-bold">Gastos</p>
-                    <p className="text-sm font-bold text-red-500">{formatCurrency(totalGastos)}</p>
+            <div className="bg-white dark:bg-white/5 p-4 border-b border-gray-100 dark:border-white/10 grid grid-cols-4 divide-x divide-gray-100 dark:divide-white/10">
+                <div className="px-1 text-center">
+                    <p className="text-[9px] uppercase text-gray-500 font-bold">Gastos</p>
+                    <p className="text-xs font-bold text-red-500">{formatCurrency(totalGastos)}</p>
                 </div>
-                <div className="px-2 text-center">
-                    <p className="text-[10px] uppercase text-gray-500 font-bold">Ventas</p>
-                    <p className="text-sm font-bold text-green-600">{formatCurrency(totalVentas)}</p>
+                <div className="px-1 text-center">
+                    <p className="text-[9px] uppercase text-gray-500 font-bold">Ventas</p>
+                    <p className="text-xs font-bold text-green-600">{formatCurrency(totalVentas)}</p>
                 </div>
-                <div className="px-2 text-center">
-                    <p className="text-[10px] uppercase text-gray-500 font-bold">Balance</p>
-                    <p className={`text-sm font-bold ${balance >= 0 ? 'text-primary' : 'text-red-500'}`}>
+                <div className="px-1 text-center">
+                    <p className="text-[9px] uppercase text-gray-500 font-bold">Por Cobrar</p>
+                    <p className="text-xs font-bold text-orange-500">{formatCurrency(totalPorCobrar)}</p>
+                </div>
+                <div className="px-1 text-center">
+                    <p className="text-[9px] uppercase text-gray-500 font-bold">Balance</p>
+                    <p className={`text-xs font-bold ${balance >= 0 ? 'text-primary' : 'text-red-500'}`}>
                         {formatCurrency(balance)}
                     </p>
                 </div>
@@ -168,8 +180,22 @@ const GallinasDetalle = () => {
                                             <span className="material-symbols-outlined text-xl">egg</span>
                                         </div>
                                         <div>
-                                            <p className="font-bold text-[#121811] dark:text-white">{v.cantidad} {v.unidad_medida}</p>
-                                            <p className="text-xs text-gray-500">{formatDateShort(v.fecha)} - {formatCurrency(v.precio_unitario)}/u</p>
+                                            <div className="flex items-center gap-2">
+                                                <p className="font-bold text-[#121811] dark:text-white">{v.cantidad} {v.unidad_medida}</p>
+                                                <span className={`text-[8px] font-black uppercase px-1.5 py-0.5 rounded ${v.estado_pago === 'debe' ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}`}>
+                                                    {v.estado_pago || 'Pagado'}
+                                                </span>
+                                            </div>
+                                            <p className="text-[10px] text-[#688961] uppercase font-bold">{formatDateShort(v.fecha)}</p>
+                                            {v.estado_pago === 'debe' && (
+                                                <button
+                                                    onClick={() => handleMarkAsPaid(v.id)}
+                                                    className="mt-1 text-[9px] font-bold text-primary underline underline-offset-2 flex items-center gap-1"
+                                                >
+                                                    <span className="material-symbols-outlined text-[12px]">check_circle</span>
+                                                    Marcar pagado
+                                                </button>
+                                            )}
                                         </div>
                                     </div>
                                     <span className="font-bold text-[#121811] dark:text-white">{formatCurrency(v.monto_total)}</span>

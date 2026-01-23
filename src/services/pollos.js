@@ -190,6 +190,26 @@ export const createIngreso = async (ingresoData) => {
 }
 
 /**
+ * Actualizar ingreso/venta de pollos
+ */
+export const updateIngreso = async (id, updates) => {
+    try {
+        const { data, error } = await supabase
+            .from('ingresos_pollos')
+            .update(updates)
+            .eq('id', id)
+            .select()
+            .single()
+
+        if (error) throw error
+        return { data, error: null }
+    } catch (error) {
+        console.error('Error updating ingreso:', error)
+        return { data: null, error }
+    }
+}
+
+/**
  * Calcular rentabilidad de una producción
  */
 export const calcularRentabilidad = async (produccionId) => {
@@ -211,5 +231,30 @@ export const calcularRentabilidad = async (produccionId) => {
     } catch (error) {
         console.error('Error calculating rentabilidad:', error)
         return null
+    }
+}
+
+/**
+ * Obtener clientes recientes (únicos)
+ */
+export const getRecentClients = async (userId) => {
+    try {
+        const { data, error } = await supabase
+            .from('ingresos_pollos')
+            .select('cliente')
+            .eq('user_id', userId)
+            .not('cliente', 'is', null)
+            .order('fecha', { ascending: false })
+
+        if (error) throw error
+
+        const uniqueClients = [...new Set(data.map(i => i.cliente))]
+            .filter(name => name && name !== 'Consumidor Final')
+            .slice(0, 10)
+
+        return { data: uniqueClients, error: null }
+    } catch (error) {
+        console.error('Error fetching clients:', error)
+        return { data: [], error }
     }
 }

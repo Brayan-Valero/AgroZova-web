@@ -196,45 +196,46 @@ const Reportes = () => {
                                         </BarChart>
                                     </ResponsiveContainer>
                                 </div>
-                            </ResponsiveContainer>
-                        </div>
-                </section>
+                            </section>
 
-                {/* Gráfica de Balance Financiero */}
-                <section className="pt-2">
-                    <h3 className="font-bold text-lg text-[#121811] dark:text-white mb-4 px-1">Balance Financiero</h3>
-                    <div className="h-64 w-full bg-white dark:bg-[#1a2618] p-2 rounded-xl border border-[#dde6db] dark:border-[#2a3528] shadow-sm">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={financialData}>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.1} />
-                                <XAxis
-                                    dataKey="shortDate"
-                                    tick={{ fontSize: 10 }}
-                                    tickLine={false}
-                                    axisLine={false}
-                                    interval={4}
-                                />
-                                <YAxis
-                                    hide={false}
-                                    tick={{ fontSize: 10 }}
-                                    tickLine={false}
-                                    axisLine={false}
-                                    width={35}
-                                    tickFormatter={(value) => `$${value / 1000}k`}
-                                />
-                                <Tooltip
-                                    cursor={{ fill: 'transparent' }}
-                                    contentStyle={{ backgroundColor: '#1a2618', border: 'none', borderRadius: '8px', color: '#fff' }}
-                                    itemStyle={{ color: '#fff' }}
-                                    formatter={(value) => [`$${value.toLocaleString()}`, '']}
-                                />
-                                <Legend verticalAlign="top" height={36} />
-                                <Bar dataKey="ingresos" name="Ingresos" fill="#22c55e" radius={[4, 4, 0, 0]} />
-                                <Bar dataKey="gastos" name="Gastos" fill="#ef4444" radius={[4, 4, 0, 0]} />
-                            </BarChart>
-                        </ResponsiveContainer>
-                    </div>
-                </section>
+                            {/* Gráfica de Balance Financiero */}
+                            <section className="pt-2">
+                                <h3 className="font-bold text-lg text-[#121811] dark:text-white mb-4 px-1">Balance Financiero</h3>
+                                <div className="h-64 w-full bg-white dark:bg-[#1a2618] p-2 rounded-xl border border-[#dde6db] dark:border-[#2a3528] shadow-sm">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <BarChart data={financialData}>
+                                            <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.1} />
+                                            <XAxis
+                                                dataKey="shortDate"
+                                                tick={{ fontSize: 10 }}
+                                                tickLine={false}
+                                                axisLine={false}
+                                                interval={4}
+                                            />
+                                            <YAxis
+                                                hide={false}
+                                                tick={{ fontSize: 10 }}
+                                                tickLine={false}
+                                                axisLine={false}
+                                                width={35}
+                                                tickFormatter={(value) => `$${value / 1000}k`}
+                                            />
+                                            <Tooltip
+                                                cursor={{ fill: 'transparent' }}
+                                                contentStyle={{ backgroundColor: '#1a2618', border: 'none', borderRadius: '8px', color: '#fff' }}
+                                                itemStyle={{ color: '#fff' }}
+                                                formatter={(value) => [`$${value.toLocaleString()}`, '']}
+                                            />
+                                            <Legend verticalAlign="top" height={36} />
+                                            <Bar dataKey="ingresos" name="Ingresos" fill="#22c55e" radius={[4, 4, 0, 0]} />
+                                            <Bar dataKey="gastos" name="Gastos" fill="#ef4444" radius={[4, 4, 0, 0]} />
+                                        </BarChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            </section>
+                        </>
+                    )}
+                </div>
 
                 <BottomNavigation />
             </div>

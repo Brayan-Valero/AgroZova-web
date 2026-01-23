@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { getProducciones, createProduccion, deleteProduccion, createGasto, createIngreso } from '../services/pollos'
-import { formatCurrency } from '../utils/formatters'
+import { getProducciones, createProduccion, updateProduccion, deleteProduccion, createGasto, createIngreso } from '../services/pollos'
+import { getAllRecentClients } from '../services/clients'
+import { formatCurrency, formatDateShort } from '../utils/formatters'
 import BottomNavigation from '../components/BottomNavigation'
 
 const PollosEngorde = () => {
@@ -35,9 +36,14 @@ const PollosEngorde = () => {
     const [formVenta, setFormVenta] = useState({
         concepto: 'Venta de pollos',
         cantidad: '',
-        precio_unitario: '',
+        peso_total: '',
+        precio_kilo: 13000,
+        cliente: '',
+        estado_pago: 'debe',
         monto_total: ''
     })
+
+    const [recentClients, setRecentClients] = useState([])
 
     useEffect(() => {
         loadProducciones()
@@ -48,6 +54,11 @@ const PollosEngorde = () => {
         setLoading(true)
         const { data } = await getProducciones(user.id)
         setProducciones(data || [])
+
+        // Cargar clientes recientes (todos los módulos)
+        const { data: clients } = await getAllRecentClients(user.id)
+        setRecentClients(clients || [])
+
         setLoading(false)
     }
 
@@ -58,25 +69,33 @@ const PollosEngorde = () => {
         const { data: newProduccion, error } = await createProduccion({
             nombre: formData.nombre,
             galpon: formData.galpon,
-            cantidad_inicial: formData.cantidad_inicial,
+            cantidad_inicial: parseInt(formData.cantidad_inicial),
+            // precio_unitario removed as it doesn't exist in DB
             fecha_inicio: formData.fecha_inicio,
             user_id: user.id,
-            cantidad_actual: formData.cantidad_inicial,
+            cantidad_actual: parseInt(formData.cantidad_inicial),
             estado: 'activo'
         })
 
-        if (!error && newProduccion && formData.precio_unitario) {
-            // 2. Calcular costo total de pollos
-            const costoTotal = parseFloat(formData.cantidad_inicial) * parseFloat(formData.precio_unitario)
+        if (!error && newProduccion) {
+            if (formData.precio_unitario && parseFloat(formData.precio_unitario) > 0) {
+                // 2. Calcular costo total de pollos
+                const costoTotal = parseFloat(formData.cantidad_inicial || 0) * parseFloat(formData.precio_unitario)
 
-            // 3. Crear Gasto Automático
-            await createGasto({
-                produccion_id: newProduccion.id,
-                concepto: 'Compra inicial de pollos',
-                monto: costoTotal,
-                categoria: 'pollitos',
-                fecha: formData.fecha_inicio
-            })
+                // 3. Crear Gasto Automático
+                try {
+                    await createGasto({
+                        produccion_id: newProduccion.id,
+                        concepto: 'Compra inicial de pollos',
+                        monto: costoTotal,
+                        categoria: 'pollitos',
+                        user_id: user.id,
+                        fecha: formData.fecha_inicio
+                    })
+                } catch (err) {
+                    console.error('Error al crear gasto automático:', err)
+                }
+            }
 
             setShowForm(false)
             setFormData({
@@ -97,6 +116,7 @@ const PollosEngorde = () => {
             concepto: formGasto.concepto,
             monto: parseFloat(formGasto.monto),
             categoria: formGasto.categoria,
+            user_id: user.id,
             fecha: new Date().toISOString().split('T')[0]
         })
 
@@ -110,19 +130,51 @@ const PollosEngorde = () => {
 
     const handleSubmitVenta = async (e) => {
         e.preventDefault()
-        const montoTotal = parseFloat(formVenta.cantidad) * parseFloat(formVenta.precio_unitario)
+
+        // Priorizar cálculo por peso si existe, sino por unidad (legacy)
+        let montoTotal = 0
+        const peso = parseFloat(formVenta.peso_total || 0)
+        // Usar precio del form o fallback a 13000
+        const precio = parseFloat(formVenta.precio_kilo || 13000)
+        const cantidad = parseInt(formVenta.cantidad || 0)
+
+        if (peso > 0) {
+            montoTotal = peso * precio
+        } else {
+            // Fallback o lógica antigua si no usan peso
+            montoTotal = cantidad * 13000 // Asumiendo precio por unidad o el mismo precio/kilo como aproximación si no hay peso
+        }
 
         const { error } = await createIngreso({
             produccion_id: selectedProduccion.id,
-            concepto: formVenta.concepto,
+            concepto: `Venta de pollos${formVenta.cliente ? ' - ' + formVenta.cliente : ''}`,
             monto_total: montoTotal,
-            cantidad_vendida: parseInt(formVenta.cantidad),
-            fecha: new Date().toISOString().split('T')[0]
+            cantidad_vendida: cantidad,
+            peso_total: peso,
+            kilos_vendidos: peso, // Compatibilidad
+            precio_kilo: precio,
+            precio_por_kilo: precio, // Compatibilidad
+            cliente: formVenta.cliente || 'Consumidor Final',
+            estado_pago: formVenta.estado_pago,
+            fecha: new Date().toISOString().split('T')[0],
+            user_id: user.id
         })
 
         if (!error) {
+            // Actualizar cantidad actual del lote
+            const nuevaCantidad = selectedProduccion.cantidad_actual - cantidad
+            await updateProduccion(selectedProduccion.id, { cantidad_actual: nuevaCantidad })
+
             setShowFormVenta(false)
-            setFormVenta({ concepto: 'Venta de pollos', cantidad: '', precio_unitario: '', monto_total: '' })
+            setFormVenta({
+                concepto: 'Venta de pollos',
+                cantidad: '',
+                peso_total: '',
+                precio_kilo: 13000,
+                cliente: '',
+                estado_pago: 'debe',
+                monto_total: ''
+            })
             setSelectedProduccion(null)
             loadProducciones()
         }
@@ -198,13 +250,15 @@ const PollosEngorde = () => {
                                     </div>
 
                                     <div className="grid grid-cols-2 gap-2 mb-4">
-                                        <div className="bg-white dark:bg-[#0a1108] p-2 rounded-lg">
-                                            <p className="text-[#688961] text-xs">Población</p>
-                                            <p className="text-[#121811] dark:text-white font-bold">{prod.cantidad_actual || prod.cantidad_inicial} pollos</p>
+                                        <div className="bg-white dark:bg-[#0a1108] p-2 rounded-lg border border-[#dde6db] dark:border-[#2a3528]">
+                                            <p className="text-[#688961] text-[10px] uppercase font-bold text-center">Cant. Actual</p>
+                                            <p className="text-[#121811] dark:text-white font-bold text-center text-xs">{prod.cantidad_actual || prod.cantidad_inicial}</p>
                                         </div>
-                                        <div className="bg-white dark:bg-[#0a1108] p-2 rounded-lg">
-                                            <p className="text-[#688961] text-xs">Inicio</p>
-                                            <p className="text-[#121811] dark:text-white font-bold">{new Date(prod.fecha_inicio).toLocaleDateString()}</p>
+                                        <div className="bg-[#f1f4f0] dark:bg-[#1a2618] p-2 rounded-lg border border-[#dde6db] dark:border-[#2a3528]">
+                                            <p className="text-red-500 text-[10px] uppercase font-bold text-center">Inversión Pollo</p>
+                                            <p className="text-red-600 font-bold text-center text-xs">
+                                                {prod.cantidad_inicial && prod.precio_unitario ? formatCurrency(prod.cantidad_inicial * prod.precio_unitario) : 'N/A'}
+                                            </p>
                                         </div>
                                     </div>
 
@@ -396,19 +450,23 @@ const PollosEngorde = () => {
                                 </button>
                             </div>
                             <form onSubmit={handleSubmitVenta} className="space-y-4">
-                                <div>
-                                    <label className="block text-xs font-bold text-[#688961] uppercase mb-2">Concepto de Venta</label>
-                                    <input
-                                        type="text"
-                                        value={formVenta.concepto}
-                                        onChange={(e) => setFormVenta({ ...formVenta, concepto: e.target.value })}
-                                        className="w-full bg-white dark:bg-[#0a1108] border border-[#dde6db] dark:border-[#2a3528] rounded-lg p-3 text-[#121811] dark:text-white"
-                                        required
-                                    />
-                                </div>
                                 <div className="grid grid-cols-2 gap-4">
+                                    <div className="col-span-2">
+                                        <label className="block text-xs font-bold text-[#688961] uppercase mb-2">Cliente</label>
+                                        <input
+                                            type="text"
+                                            value={formVenta.cliente}
+                                            onChange={(e) => setFormVenta({ ...formVenta, cliente: e.target.value })}
+                                            className="w-full bg-white dark:bg-[#0a1108] border border-[#dde6db] dark:border-[#2a3528] rounded-lg p-3 text-[#121811] dark:text-white"
+                                            placeholder="Nombre del cliente"
+                                            list="clients-list"
+                                        />
+                                        <datalist id="clients-list">
+                                            {recentClients.map(c => <option key={c} value={c} />)}
+                                        </datalist>
+                                    </div>
                                     <div>
-                                        <label className="block text-xs font-bold text-[#688961] uppercase mb-2">Cantidad (Pollos)</label>
+                                        <label className="block text-xs font-bold text-[#688961] uppercase mb-2">Cant. (Aves)</label>
                                         <input
                                             type="number"
                                             value={formVenta.cantidad}
@@ -419,29 +477,52 @@ const PollosEngorde = () => {
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-xs font-bold text-[#688961] uppercase mb-2">Precio Unitario</label>
+                                        <label className="block text-xs font-bold text-[#688961] uppercase mb-2">Peso Total (Kg)</label>
                                         <input
                                             type="number"
-                                            value={formVenta.precio_unitario}
-                                            onChange={(e) => setFormVenta({ ...formVenta, precio_unitario: e.target.value })}
+                                            value={formVenta.peso_total}
+                                            onChange={(e) => setFormVenta({ ...formVenta, peso_total: e.target.value })}
                                             className="w-full bg-white dark:bg-[#0a1108] border border-[#dde6db] dark:border-[#2a3528] rounded-lg p-3 text-[#121811] dark:text-white"
-                                            placeholder="$0.00"
+                                            placeholder="0.00"
+                                            step="0.01"
                                             required
                                         />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-[#688961] uppercase mb-2">Precio / Kilo</label>
+                                        <input
+                                            type="number"
+                                            value={formVenta.precio_kilo}
+                                            onChange={(e) => setFormVenta({ ...formVenta, precio_kilo: e.target.value })}
+                                            className="w-full bg-white dark:bg-[#0a1108] border border-[#dde6db] dark:border-[#2a3528] rounded-lg p-3 text-[#121811] dark:text-white"
+                                            placeholder="13.00"
+                                            required
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-[#688961] uppercase mb-2">Estado Pago</label>
+                                        <select
+                                            value={formVenta.estado_pago}
+                                            onChange={(e) => setFormVenta({ ...formVenta, estado_pago: e.target.value })}
+                                            className={`w-full border border-[#dde6db] dark:border-[#2a3528] rounded-lg p-3 font-bold ${formVenta.estado_pago === 'pagado' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}
+                                        >
+                                            <option value="pagado">Pagado</option>
+                                            <option value="debe">Debe (Crédito)</option>
+                                        </select>
                                     </div>
                                 </div>
                                 <div className="pt-4 border-t border-[#dde6db] dark:border-[#2a3528] flex justify-between items-end">
                                     <div>
-                                        <p className="text-xs font-bold text-[#688961] uppercase">Total Estimado</p>
+                                        <p className="text-xs font-bold text-[#688961] uppercase">Total Venta</p>
                                         <p className="text-2xl font-black text-primary">
-                                            {formatCurrency((formVenta.cantidad && formVenta.precio_unitario) ? formVenta.cantidad * formVenta.precio_unitario : 0)}
+                                            {formatCurrency((formVenta.peso_total && formVenta.precio_kilo) ? formVenta.peso_total * formVenta.precio_kilo : 0)}
                                         </p>
                                     </div>
                                     <button
                                         type="submit"
                                         className="bg-primary text-black font-black px-6 py-2 rounded-lg shadow-md hover:bg-opacity-90 transition-all"
                                     >
-                                        Confirmar
+                                        Registrar
                                     </button>
                                 </div>
                             </form>

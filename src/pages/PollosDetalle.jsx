@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { getProduccionById, getGastosByProduccion, getIngresosByProduccion, createGasto, createIngreso } from '../services/pollos'
+import { getProduccionById, getGastosByProduccion, getIngresosByProduccion, createGasto, createIngreso, updateProduccion, updateIngreso } from '../services/pollos'
+import { getAllRecentClients } from '../services/clients'
 import { formatCurrency, formatDateShort } from '../utils/formatters'
 import BottomNavigation from '../components/BottomNavigation'
 
@@ -13,9 +14,22 @@ const PollosDetalle = () => {
     const [activeTab, setActiveTab] = useState('resumen')
     const [loading, setLoading] = useState(true)
 
-    // Form states for modals (simplified for now, could be separate components)
+    // Modals
     const [showGastoModal, setShowGastoModal] = useState(false)
     const [showVentaModal, setShowVentaModal] = useState(false)
+    const [showMortalidadModal, setShowMortalidadModal] = useState(false)
+
+    // Form states
+    const [formGasto, setFormGasto] = useState({ concepto: '', monto: '', categoria: 'alimento' })
+    const [formVenta, setFormVenta] = useState({
+        cantidad: '',
+        peso_total: '',
+        precio_kilo: 13000,
+        cliente: '',
+        estado_pago: 'debe'
+    })
+    const [formMortalidad, setFormMortalidad] = useState({ cantidad: '', motivo: '' })
+    const [recentClients, setRecentClients] = useState([])
 
     useEffect(() => {
         loadData()
@@ -30,109 +44,207 @@ const PollosDetalle = () => {
             setGastos(g || [])
             const { data: i } = await getIngresosByProduccion(id)
             setIngresos(i || [])
+
+            // Cargar clientes recientes (todos los módulos)
+            const { data: clients } = await getAllRecentClients(prod.user_id)
+            setRecentClients(clients || [])
         }
         setLoading(false)
     }
 
-    const totalGastos = gastos.reduce((acc, g) => acc + (g.monto || 0), 0)
-    const totalIngresos = ingresos.reduce((acc, i) => acc + (i.monto_total || 0), 0)
-    const balance = totalIngresos - totalGastos
+    const handleAddGasto = async (e) => {
+        e.preventDefault()
+        const { error } = await createGasto({
+            produccion_id: id,
+            concepto: formGasto.concepto,
+            monto: parseFloat(formGasto.monto),
+            categoria: formGasto.categoria,
+            user_id: produccion.user_id,
+            fecha: new Date().toISOString().split('T')[0]
+        })
+        if (!error) {
+            setShowGastoModal(false)
+            setFormGasto({ concepto: '', monto: '', categoria: 'alimento' })
+            loadData()
+        }
+    }
 
-    if (loading) return <div className="p-8 text-center">Cargando...</div>
+    const handleAddVenta = async (e) => {
+        e.preventDefault()
+        const peso = parseFloat(formVenta.peso_total || 0)
+        const precio = parseFloat(formVenta.precio_kilo || 13000)
+        const cantidad = parseInt(formVenta.cantidad || 0)
+        const montoTotal = peso * precio
+
+        const { error: errorIngreso } = await createIngreso({
+            produccion_id: id,
+            concepto: `Venta de pollos${formVenta.cliente ? ' - ' + formVenta.cliente : ''}`,
+            monto_total: montoTotal,
+            cantidad_vendida: cantidad,
+            peso_total: peso,
+            kilos_vendidos: peso,
+            precio_kilo: precio,
+            precio_por_kilo: precio, // Compatibilidad
+            cliente: formVenta.cliente || 'Consumidor Final',
+            estado_pago: formVenta.estado_pago,
+            user_id: produccion.user_id,
+            fecha: new Date().toISOString().split('T')[0]
+        })
+
+        if (!errorIngreso) {
+            // Update population
+            const nuevaCantidad = produccion.cantidad_actual - cantidad
+            await updateProduccion(id, { cantidad_actual: nuevaCantidad })
+
+            setShowVentaModal(false)
+            setFormVenta({ cantidad: '', peso_total: '', precio_kilo: 13000, cliente: '', estado_pago: 'debe' })
+            loadData()
+        }
+    }
+
+    const handleMarkAsPaid = async (ingresoId) => {
+        const { error } = await updateIngreso(ingresoId, { estado_pago: 'pagado' })
+        if (!error) {
+            loadData()
+        }
+    }
+
+    const handleAddMortalidad = async (e) => {
+        e.preventDefault()
+        const cantidad = parseInt(formMortalidad.cantidad || 0)
+
+        // Add expense/record of mortality if desired, for now just update population
+        const nuevaCantidad = produccion.cantidad_actual - cantidad
+        const { error } = await updateProduccion(id, { cantidad_actual: nuevaCantidad })
+
+        if (!error) {
+            setShowMortalidadModal(false)
+            setFormMortalidad({ cantidad: '', motivo: '' })
+            loadData()
+        }
+    }
+
+    if (loading) return (
+        <div className="bg-background-light dark:bg-background-dark min-h-screen flex items-center justify-center">
+            <span className="material-symbols-outlined text-4xl text-primary animate-pulse">flutter_dash</span>
+        </div>
+    )
+
     if (!produccion) return <div className="p-8 text-center">Producción no encontrada</div>
 
+    const hasInitialPurchaseExpense = gastos.some(g => g.categoria === 'pollitos' || g.concepto.toLowerCase().includes('compra inicial'))
+    const initialCostVal = (!hasInitialPurchaseExpense && produccion.cantidad_inicial && produccion.precio_unitario)
+        ? (parseFloat(produccion.cantidad_inicial) * parseFloat(produccion.precio_unitario))
+        : 0
+
+    const totalGastos = gastos.reduce((acc, g) => acc + (g.monto || 0), 0) + initialCostVal
+    const totalIngresos = ingresos.reduce((acc, i) => acc + (i.monto_total || 0), 0)
+    const totalPorCobrar = ingresos.filter(i => i.estado_pago === 'debe').reduce((acc, i) => acc + (i.monto_total || 0), 0)
+    const balance = (totalIngresos - totalPorCobrar) - totalGastos
+
+
     return (
-        <div className="bg-background-light dark:bg-background-dark min-h-screen flex flex-col font-display">
+        <div className="bg-background-light dark:bg-background-dark min-h-screen flex flex-col font-display max-w-[430px] mx-auto bg-white dark:bg-[#0a1108] shadow-2xl relative">
             {/* Header */}
-            <header className="bg-white dark:bg-white/5 border-b border-gray-100 dark:border-white/10 p-4 sticky top-0 z-10 safe-top">
+            <header className="bg-white dark:bg-[#0a1108] border-b border-[#dde6db] dark:border-[#2a3528] p-4 sticky top-0 z-40 safe-top">
                 <div className="flex items-center gap-3">
                     <button onClick={() => navigate('/pollos')} className="material-symbols-outlined text-gray-600 dark:text-gray-300">
-                        arrow_back
+                        arrow_back_ios
                     </button>
-                    <div>
+                    <div className="flex-1">
                         <h1 className="text-lg font-bold text-[#121811] dark:text-white leading-tight">
                             {produccion.nombre}
                         </h1>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                            Iniciado: {formatDateShort(produccion.fecha_inicio)}
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-[#688961]">
+                            Galpón: {produccion.galpon || 'N/A'}
                         </p>
                     </div>
                 </div>
             </header>
 
             {/* Quick Stats Header */}
-            <div className="bg-white dark:bg-white/5 p-4 border-b border-gray-100 dark:border-white/10 grid grid-cols-3 divide-x divide-gray-100 dark:divide-white/10">
-                <div className="px-2 text-center">
-                    <p className="text-[10px] uppercase text-gray-500 font-bold">Gastos</p>
-                    <p className="text-sm font-bold text-red-500">{formatCurrency(totalGastos)}</p>
+            <div className="bg-white dark:bg-[#0a1108] p-4 border-b border-[#dde6db] dark:border-[#2a3528] grid grid-cols-4 divide-x divide-[#dde6db] dark:divide-[#2a3528]">
+                <div className="px-1 text-center">
+                    <p className="text-[9px] uppercase text-[#688961] font-bold">Gastos</p>
+                    <p className="text-xs font-bold text-red-500">{formatCurrency(totalGastos)}</p>
                 </div>
-                <div className="px-2 text-center">
-                    <p className="text-[10px] uppercase text-gray-500 font-bold">Ventas</p>
-                    <p className="text-sm font-bold text-green-600">{formatCurrency(totalIngresos)}</p>
+                <div className="px-1 text-center">
+                    <p className="text-[9px] uppercase text-[#688961] font-bold">Ventas</p>
+                    <p className="text-xs font-bold text-green-600">{formatCurrency(totalIngresos)}</p>
                 </div>
-                <div className="px-2 text-center">
-                    <p className="text-[10px] uppercase text-gray-500 font-bold">Balance</p>
-                    <p className={`text-sm font-bold ${balance >= 0 ? 'text-primary' : 'text-red-500'}`}>
+                <div className="px-1 text-center">
+                    <p className="text-[9px] uppercase text-[#688961] font-bold">Por Cobrar</p>
+                    <p className="text-xs font-bold text-orange-500">{formatCurrency(totalPorCobrar)}</p>
+                </div>
+                <div className="px-1 text-center">
+                    <p className="text-[9px] uppercase text-[#688961] font-bold">Balance</p>
+                    <p className={`text-xs font-bold ${balance >= 0 ? 'text-primary' : 'text-red-500'}`}>
                         {formatCurrency(balance)}
                     </p>
                 </div>
             </div>
 
             {/* Tabs */}
-            <div className="flex border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-white/5">
-                <button
-                    onClick={() => setActiveTab('resumen')}
-                    className={`flex-1 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'resumen' ? 'border-primary text-primary' : 'border-transparent text-gray-500 dark:text-gray-400'}`}
-                >
-                    Resumen
-                </button>
-                <button
-                    onClick={() => setActiveTab('gastos')}
-                    className={`flex-1 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'gastos' ? 'border-primary text-primary' : 'border-transparent text-gray-500 dark:text-gray-400'}`}
-                >
-                    Gastos
-                </button>
-                <button
-                    onClick={() => setActiveTab('ventas')}
-                    className={`flex-1 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'ventas' ? 'border-primary text-primary' : 'border-transparent text-gray-500 dark:text-gray-400'}`}
-                >
-                    Ventas
-                </button>
+            <div className="flex border-b border-[#dde6db] dark:border-[#2a3528] bg-white dark:bg-[#0a1108]">
+                {['resumen', 'gastos', 'ventas'].map((tab) => (
+                    <button
+                        key={tab}
+                        onClick={() => setActiveTab(tab)}
+                        className={`flex-1 py-3 text-xs font-bold uppercase tracking-wider transition-all border-b-2 ${activeTab === tab ? 'border-primary text-primary' : 'border-transparent text-[#688961]'}`}
+                    >
+                        {tab}
+                    </button>
+                ))}
             </div>
 
             {/* Content */}
-            <main className="flex-1 p-4 pb-24 overflow-y-auto">
+            <main className="flex-1 p-4 pb-32 overflow-y-auto">
                 {activeTab === 'resumen' && (
                     <div className="space-y-4">
-                        <div className="bg-white dark:bg-white/5 rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-white/5">
-                            <h3 className="font-bold text-[#121811] dark:text-white mb-3 flex items-center gap-2">
-                                <span className="material-symbols-outlined text-primary">info</span>
-                                Información General
+                        <div className="bg-[#f1f4f0] dark:bg-[#1a2618] rounded-2xl p-4 border border-[#dde6db] dark:border-[#2a3528]">
+                            <h3 className="font-bold text-[#121811] dark:text-white mb-4 flex items-center justify-between">
+                                <span className="flex items-center gap-2">
+                                    <span className="material-symbols-outlined text-primary">analytics</span>
+                                    Estado del Lote
+                                </span>
+                                <span className={`px-2 py-1 rounded-lg text-[10px] font-black uppercase ${produccion.estado === 'activo' ? 'bg-primary/20 text-primary' : 'bg-gray-200 text-gray-500'}`}>
+                                    {produccion.estado}
+                                </span>
                             </h3>
-                            <div className="space-y-3 text-sm">
-                                <div className="flex justify-between border-b border-gray-50 dark:border-white/5 pb-2">
-                                    <span className="text-gray-500">Galpón</span>
-                                    <span className="font-medium text-[#121811] dark:text-white">{produccion.galpon || 'N/A'}</span>
+                            <div className="grid grid-cols-2 gap-3">
+                                <div className="bg-white dark:bg-[#0a1108] p-3 rounded-xl border border-[#dde6db] dark:border-[#2a3528]">
+                                    <p className="text-[10px] font-bold text-[#688961] uppercase">Población Actual</p>
+                                    <p className="text-xl font-black text-primary">{produccion.cantidad_actual}</p>
+                                    <p className="text-[9px] text-gray-500 mt-1">Inició con {produccion.cantidad_inicial}</p>
                                 </div>
-                                <div className="flex justify-between border-b border-gray-50 dark:border-white/5 pb-2">
-                                    <span className="text-gray-500">Cantidad Inicial</span>
-                                    <span className="font-medium text-[#121811] dark:text-white">{produccion.cantidad_inicial} aves</span>
+                                <div className="bg-white dark:bg-[#0a1108] p-3 rounded-xl border border-[#dde6db] dark:border-[#2a3528]">
+                                    <p className="text-[10px] font-bold text-[#688961] uppercase">Bajas (Muertes)</p>
+                                    <p className="text-xl font-black text-red-500">{produccion.cantidad_inicial - (produccion.cantidad_actual + ingresos.reduce((acc, i) => acc + (i.cantidad_vendida || 0), 0))}</p>
+                                    <p className="text-[9px] text-gray-500 mt-1">Estimado no vendidas</p>
                                 </div>
-                                <div className="flex justify-between border-b border-gray-50 dark:border-white/5 pb-2">
-                                    <span className="text-gray-500">Cantidad Actual</span>
-                                    <span className="font-medium text-[#121811] dark:text-white">{produccion.cantidad_actual} aves</span>
+                            </div>
+
+                            <button
+                                onClick={() => setShowMortalidadModal(true)}
+                                className="w-full mt-4 bg-white dark:bg-transparent border border-red-500/30 text-red-500 py-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 hover:bg-red-50 transition-all"
+                            >
+                                <span className="material-symbols-outlined text-lg">skull</span>
+                                Reportar Mortalidad
+                            </button>
+                        </div>
+
+                        <div className="bg-primary/10 rounded-2xl p-4 border border-primary/20">
+                            <h4 className="text-xs font-bold text-primary uppercase mb-2">Rentabilidad Estimada</h4>
+                            <div className="flex justify-between items-end">
+                                <div>
+                                    <p className="text-2xl font-black text-primary">{formatCurrency(balance)}</p>
+                                    <p className="text-[10px] text-[#688961]">Utilidad neta a la fecha</p>
                                 </div>
-                                <div className="flex justify-between border-b border-gray-50 dark:border-white/5 pb-2">
-                                    <span className="text-gray-500">Mortalidad</span>
-                                    <span className="font-medium text-red-500">
-                                        {produccion.cantidad_inicial - produccion.cantidad_actual} aves ({((produccion.cantidad_inicial - produccion.cantidad_actual) / produccion.cantidad_inicial * 100).toFixed(1)}%)
-                                    </span>
-                                </div>
-                                <div className="flex justify-between pt-1">
-                                    <span className="text-gray-500">Estado</span>
-                                    <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${produccion.estado === 'activo' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
-                                        {produccion.estado === 'activo' ? 'En Curso' : 'Finalizada'}
-                                    </span>
+                                <div className="text-right">
+                                    <p className={`text-lg font-black ${balance >= 0 ? 'text-green-600' : 'text-red-500'}`}>
+                                        {totalGastos > 0 ? ((balance / totalGastos) * 100).toFixed(1) : 0}%
+                                    </p>
+                                    <p className="text-[10px] text-[#688961]">Margen</p>
                                 </div>
                             </div>
                         </div>
@@ -141,58 +253,254 @@ const PollosDetalle = () => {
 
                 {activeTab === 'gastos' && (
                     <div className="space-y-4">
-                        <div className="flex justify-between items-center">
-                            <h3 className="font-bold text-[#121811] dark:text-white">Historial de Gastos</h3>
-                            {/* In future iteration: Add button to open modal here */}
+                        <div className="flex justify-between items-center px-1">
+                            <h3 className="font-bold text-[#121811] dark:text-white">Inversiones y Costos</h3>
+                            <button
+                                onClick={() => setShowGastoModal(true)}
+                                className="size-8 bg-red-100 text-red-600 rounded-full flex items-center justify-center"
+                            >
+                                <span className="material-symbols-outlined text-lg">add</span>
+                            </button>
                         </div>
-                        {gastos.length === 0 ? (
-                            <div className="text-center py-8 text-gray-400">No hay gastos registrados</div>
-                        ) : (
-                            gastos.map(g => (
-                                <div key={g.id} className="bg-white dark:bg-white/5 p-3 rounded-xl border border-gray-100 dark:border-white/5 flex justify-between items-center">
-                                    <div className="flex items-center gap-3">
-                                        <div className="size-10 rounded-full bg-red-50 dark:bg-red-900/20 flex items-center justify-center text-red-500">
-                                            <span className="material-symbols-outlined text-xl">payments</span>
-                                        </div>
-                                        <div>
-                                            <p className="font-bold text-[#121811] dark:text-white">{g.concepto}</p>
-                                            <p className="text-xs text-gray-500">{formatDateShort(g.fecha)} - {g.categoria}</p>
-                                        </div>
-                                    </div>
-                                    <span className="font-bold text-[#121811] dark:text-white">{formatCurrency(g.monto)}</span>
+                        <div className="space-y-3">
+                            {gastos.length === 0 ? (
+                                <div className="text-center py-12 text-[#688961] bg-[#f1f4f0] dark:bg-[#1a2618] rounded-2xl border border-dashed border-[#dde6db] dark:border-[#2a3528]">
+                                    No hay gastos registrados
                                 </div>
-                            ))
-                        )}
+                            ) : (
+                                gastos.map(g => (
+                                    <div key={g.id} className="bg-white dark:bg-[#1a2618] p-4 rounded-xl border border-[#dde6db] dark:border-[#2a3528] flex justify-between items-center shadow-sm">
+                                        <div className="flex items-center gap-3">
+                                            <div className="size-10 rounded-xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center text-red-500">
+                                                <span className="material-symbols-outlined text-xl">payments</span>
+                                            </div>
+                                            <div>
+                                                <p className="font-bold text-[#121811] dark:text-white text-sm">{g.concepto}</p>
+                                                <p className="text-[10px] text-[#688961] uppercase font-bold">{formatDateShort(g.fecha)} • {g.categoria}</p>
+                                            </div>
+                                        </div>
+                                        <span className="font-black text-red-500">{formatCurrency(g.monto)}</span>
+                                    </div>
+                                ))
+                            )}
+                        </div>
                     </div>
                 )}
 
                 {activeTab === 'ventas' && (
                     <div className="space-y-4">
-                        <div className="flex justify-between items-center">
-                            <h3 className="font-bold text-[#121811] dark:text-white">Historial de Ventas</h3>
-                            {/* In future iteration: Add button to open modal here */}
+                        <div className="flex justify-between items-center px-1">
+                            <h3 className="font-bold text-[#121811] dark:text-white">Ventas Realizadas</h3>
+                            <button
+                                onClick={() => setShowVentaModal(true)}
+                                className="size-8 bg-green-100 text-green-600 rounded-full flex items-center justify-center"
+                            >
+                                <span className="material-symbols-outlined text-lg">add</span>
+                            </button>
                         </div>
-                        {ingresos.length === 0 ? (
-                            <div className="text-center py-8 text-gray-400">No hay ventas registradas</div>
-                        ) : (
-                            ingresos.map(i => (
-                                <div key={i.id} className="bg-white dark:bg-white/5 p-3 rounded-xl border border-gray-100 dark:border-white/5 flex justify-between items-center">
-                                    <div className="flex items-center gap-3">
-                                        <div className="size-10 rounded-full bg-green-50 dark:bg-green-900/20 flex items-center justify-center text-green-500">
-                                            <span className="material-symbols-outlined text-xl">monetization_on</span>
+                        <div className="space-y-3">
+                            {ingresos.length === 0 ? (
+                                <div className="text-center py-12 text-[#688961] bg-[#f1f4f0] dark:bg-[#1a2618] rounded-2xl border border-dashed border-[#dde6db] dark:border-[#2a3528]">
+                                    No hay ventas registradas
+                                </div>
+                            ) : (
+                                ingresos.map(i => (
+                                    <div key={i.id} className="bg-white dark:bg-[#1a2618] p-4 rounded-xl border border-[#dde6db] dark:border-[#2a3528] flex justify-between items-center shadow-sm">
+                                        <div className="flex items-center gap-3">
+                                            <div className="size-10 rounded-xl bg-green-50 dark:bg-green-900/20 flex items-center justify-center text-green-600">
+                                                <span className="material-symbols-outlined text-xl">shopping_bag</span>
+                                            </div>
+                                            <div>
+                                                <div className="flex items-center gap-2">
+                                                    <p className="font-bold text-[#121811] dark:text-white text-sm">{i.peso_total || i.kilos_vendidos} Kg</p>
+                                                    <span className={`text-[8px] font-black uppercase px-1.5 py-0.5 rounded ${i.estado_pago === 'debe' ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}`}>
+                                                        {i.estado_pago || 'Pagado'}
+                                                    </span>
+                                                </div>
+                                                <p className="text-[10px] text-[#688961] uppercase font-bold">{formatDateShort(i.fecha)} • {i.cliente || 'Consumidor'}</p>
+                                                {i.estado_pago === 'debe' && (
+                                                    <button
+                                                        onClick={() => handleMarkAsPaid(i.id)}
+                                                        className="mt-1 text-[9px] font-bold text-primary underline underline-offset-2 flex items-center gap-1"
+                                                    >
+                                                        <span className="material-symbols-outlined text-[12px]">check_circle</span>
+                                                        Marcar como pagado
+                                                    </button>
+                                                )}
+                                            </div>
                                         </div>
-                                        <div>
-                                            <p className="font-bold text-[#121811] dark:text-white">Venta {i.kilos_vendidos}kg</p>
-                                            <p className="text-xs text-gray-500">{formatDateShort(i.fecha)} - {formatCurrency(i.precio_por_kilo)}/kg</p>
+                                        <div className="text-right">
+                                            <p className="font-black text-green-600">{formatCurrency(i.monto_total)}</p>
+                                            <p className="text-[9px] text-gray-500">${i.precio_kilo || 13}/kg</p>
                                         </div>
                                     </div>
-                                    <span className="font-bold text-[#121811] dark:text-white">{formatCurrency(i.monto_total)}</span>
-                                </div>
-                            ))
-                        )}
+                                ))
+                            )}
+                        </div>
                     </div>
                 )}
             </main>
+
+            {/* Modals */}
+            {showGastoModal && (
+                <div className="fixed inset-0 bg-black/60 z-[60] flex items-end sm:items-center justify-center p-0 sm:p-4">
+                    <div className="bg-white dark:bg-[#0a1108] w-full max-w-md rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl animate-in slide-in-from-bottom duration-300 border-x border-t border-[#dde6db] dark:border-[#2a3528]">
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="text-xl font-black text-[#121811] dark:text-white">Nuevo Gasto</h3>
+                            <button onClick={() => setShowGastoModal(false)} className="size-10 rounded-full bg-gray-100 dark:bg-[#1a2618] flex items-center justify-center">
+                                <span className="material-symbols-outlined">close</span>
+                            </button>
+                        </div>
+                        <form onSubmit={handleAddGasto} className="space-y-4">
+                            <div>
+                                <label className="block text-[10px] font-black uppercase text-[#688961] mb-2 px-1">Concepto</label>
+                                <input
+                                    type="text" required
+                                    value={formGasto.concepto}
+                                    onChange={e => setFormGasto({ ...formGasto, concepto: e.target.value })}
+                                    className="w-full bg-[#f1f4f0] dark:bg-[#1a2618] border-0 rounded-2xl p-4 text-sm focus:ring-2 ring-primary"
+                                    placeholder="Ej: Bulto de alimento"
+                                />
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-[10px] font-black uppercase text-[#688961] mb-2 px-1">Categoría</label>
+                                    <select
+                                        value={formGasto.categoria}
+                                        onChange={e => setFormGasto({ ...formGasto, categoria: e.target.value })}
+                                        className="w-full bg-[#f1f4f0] dark:bg-[#1a2618] border-0 rounded-2xl p-4 text-sm focus:ring-2 ring-primary"
+                                    >
+                                        <option value="alimento">Alimentación</option>
+                                        <option value="medicina">Medicina</option>
+                                        <option value="insumos">Insumos</option>
+                                        <option value="otros">Otros</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-[10px] font-black uppercase text-[#688961] mb-2 px-1">Monto ($)</label>
+                                    <input
+                                        type="number" required
+                                        value={formGasto.monto}
+                                        onChange={e => setFormGasto({ ...formGasto, monto: e.target.value })}
+                                        className="w-full bg-[#f1f4f0] dark:bg-[#1a2618] border-0 rounded-2xl p-4 text-sm focus:ring-2 ring-primary font-bold"
+                                        placeholder="0"
+                                    />
+                                </div>
+                            </div>
+                            <button type="submit" className="w-full bg-red-500 text-white font-black py-4 rounded-2xl shadow-lg shadow-red-500/20 active:scale-95 transition-all mt-4">
+                                REGISTRAR GASTO
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {showVentaModal && (
+                <div className="fixed inset-0 bg-black/60 z-[60] flex items-end sm:items-center justify-center p-0 sm:p-4">
+                    <div className="bg-white dark:bg-[#0a1108] w-full max-w-md rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl animate-in slide-in-from-bottom duration-300 border-x border-t border-[#dde6db] dark:border-[#2a3528]">
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="text-xl font-black text-[#121811] dark:text-white">Nueva Venta</h3>
+                            <button onClick={() => setShowVentaModal(false)} className="size-10 rounded-full bg-gray-100 dark:bg-[#1a2618] flex items-center justify-center">
+                                <span className="material-symbols-outlined">close</span>
+                            </button>
+                        </div>
+                        <form onSubmit={handleAddVenta} className="space-y-4">
+                            <div>
+                                <label className="block text-[10px] font-black uppercase text-[#688961] mb-2 px-1">Cliente</label>
+                                <input
+                                    type="text"
+                                    value={formVenta.cliente}
+                                    onChange={e => setFormVenta({ ...formVenta, cliente: e.target.value })}
+                                    className="w-full bg-[#f1f4f0] dark:bg-[#1a2618] border-0 rounded-2xl p-4 text-sm focus:ring-2 ring-primary"
+                                    placeholder="Nombre del cliente"
+                                    list="clients-list"
+                                />
+                                <datalist id="clients-list">
+                                    {recentClients.map(c => <option key={c} value={c} />)}
+                                </datalist>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-[10px] font-black uppercase text-[#688961] mb-2 px-1">Cant. (Aves)</label>
+                                    <input
+                                        type="number" required
+                                        value={formVenta.cantidad}
+                                        onChange={e => setFormVenta({ ...formVenta, cantidad: e.target.value })}
+                                        className="w-full bg-[#f1f4f0] dark:bg-[#1a2618] border-0 rounded-2xl p-4 text-sm focus:ring-2 ring-primary"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-[10px] font-black uppercase text-[#688961] mb-2 px-1">Peso Total (Kg)</label>
+                                    <input
+                                        type="number" step="0.01" required
+                                        value={formVenta.peso_total}
+                                        onChange={e => setFormVenta({ ...formVenta, peso_total: e.target.value })}
+                                        className="w-full bg-[#f1f4f0] dark:bg-[#1a2618] border-0 rounded-2xl p-4 text-sm focus:ring-2 ring-primary font-bold"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-[10px] font-black uppercase text-[#688961] mb-2 px-1">Precio/Kg</label>
+                                    <input
+                                        type="number"
+                                        value={formVenta.precio_kilo}
+                                        onChange={e => setFormVenta({ ...formVenta, precio_kilo: e.target.value })}
+                                        className="w-full bg-[#f1f4f0] dark:bg-[#1a2618] border-0 rounded-2xl p-4 text-sm focus:ring-2 ring-primary"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-[10px] font-black uppercase text-[#688961] mb-2 px-1">Estado</label>
+                                    <select
+                                        value={formVenta.estado_pago}
+                                        onChange={e => setFormVenta({ ...formVenta, estado_pago: e.target.value })}
+                                        className="w-full bg-[#f1f4f0] dark:bg-[#1a2618] border-0 rounded-2xl p-4 text-sm focus:ring-2 ring-primary"
+                                    >
+                                        <option value="pagado">Pagado</option>
+                                        <option value="debe">Debe</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div className="bg-primary/10 p-4 rounded-2xl flex justify-between items-center">
+                                <span className="text-xs font-bold text-gray-500 uppercase">Total a Recibir</span>
+                                <span className="text-xl font-black text-primary">
+                                    {formatCurrency((formVenta.peso_total * formVenta.precio_kilo) || 0)}
+                                </span>
+                            </div>
+                            <button type="submit" className="w-full bg-primary text-black font-black py-4 rounded-2xl shadow-lg shadow-primary/20 active:scale-95 transition-all">
+                                CONFIRMAR VENTA
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {showMortalidadModal && (
+                <div className="fixed inset-0 bg-black/60 z-[60] flex items-end sm:items-center justify-center p-0 sm:p-4">
+                    <div className="bg-white dark:bg-[#0a1108] w-full max-w-md rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl animate-in slide-in-from-bottom duration-300 border-x border-t border-[#dde6db] dark:border-[#2a3528]">
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="text-xl font-black text-red-500">Reportar Mortalidad</h3>
+                            <button onClick={() => setShowMortalidadModal(false)} className="size-10 rounded-full bg-gray-100 dark:bg-[#1a2618] flex items-center justify-center">
+                                <span className="material-symbols-outlined">close</span>
+                            </button>
+                        </div>
+                        <form onSubmit={handleAddMortalidad} className="space-y-4">
+                            <div>
+                                <label className="block text-[10px] font-black uppercase text-[#688961] mb-2 px-1">Cantidad de Bajas</label>
+                                <input
+                                    type="number" required
+                                    value={formMortalidad.cantidad}
+                                    onChange={e => setFormMortalidad({ ...formMortalidad, cantidad: e.target.value })}
+                                    className="w-full bg-red-50 dark:bg-red-900/10 border-0 rounded-2xl p-4 text-lg font-black text-red-500 focus:ring-2 ring-red-500"
+                                    placeholder="0"
+                                />
+                                <p className="text-[10px] text-gray-500 mt-2 px-1">Se descontarán de la población actual inmediatamente.</p>
+                            </div>
+                            <button type="submit" className="w-full bg-red-500 text-white font-black py-4 rounded-2xl shadow-lg shadow-red-500/20 active:scale-95 transition-all mt-4">
+                                CONFIRMAR BAJAS
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            )}
 
             <BottomNavigation />
         </div>

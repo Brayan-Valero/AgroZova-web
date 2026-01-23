@@ -7,21 +7,37 @@ import BottomNavigation from '../components/BottomNavigation'
 const Dashboard = () => {
     const { user, signOut } = useAuth()
     const navigate = useNavigate()
+    const [filtroFecha, setFiltroFecha] = useState('mes')
     const [stats, setStats] = useState({
         ingresos: 0,
         gastos: 0,
+        porCobrar: 0,
         balance: 0
     })
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
         loadStats()
-    }, [user])
+    }, [user, filtroFecha])
 
     const loadStats = async () => {
         if (!user) return
         setLoading(true)
-        const data = await getDashboardStats(user.id)
+
+        let startDate = null
+        const today = new Date()
+
+        if (filtroFecha === 'semana') {
+            const lastWeek = new Date(today)
+            lastWeek.setDate(today.getDate() - 7)
+            startDate = lastWeek.toISOString().split('T')[0]
+        } else if (filtroFecha === 'trimestre') {
+            const lastQuarter = new Date(today)
+            lastQuarter.setMonth(today.getMonth() - 3)
+            startDate = lastQuarter.toISOString().split('T')[0]
+        }
+
+        const data = await getDashboardStats(user.id, startDate)
         setStats(data)
         setLoading(false)
     }
@@ -71,20 +87,42 @@ const Dashboard = () => {
             </nav>
 
             <main className="flex-1 max-w-md mx-auto w-full pb-24">
+                {/* Date Filters */}
+                <div className="flex gap-3 p-4 overflow-x-auto no-scrollbar">
+                    <button
+                        onClick={() => setFiltroFecha('semana')}
+                        className={`flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-xl px-4 ${filtroFecha === 'semana' ? 'bg-primary text-white shadow-sm' : 'bg-white dark:bg-white/10 border border-gray-100 dark:border-gray-700 text-[#121811] dark:text-white'}`}
+                    >
+                        <p className="text-sm font-semibold">Semana</p>
+                    </button>
+                    <button
+                        onClick={() => setFiltroFecha('mes')}
+                        className={`flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-xl px-4 ${filtroFecha === 'mes' ? 'bg-primary text-white shadow-sm' : 'bg-white dark:bg-white/10 border border-gray-100 dark:border-gray-700 text-[#121811] dark:text-white'}`}
+                    >
+                        <p className="text-sm font-semibold">Este mes</p>
+                    </button>
+                    <button
+                        onClick={() => setFiltroFecha('trimestre')}
+                        className={`flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-xl px-4 ${filtroFecha === 'trimestre' ? 'bg-primary text-white shadow-sm' : 'bg-white dark:bg-white/10 border border-gray-100 dark:border-gray-700 text-[#121811] dark:text-white'}`}
+                    >
+                        <p className="text-sm font-semibold">Trimestre</p>
+                    </button>
+                </div>
+
                 {/* Stats Section */}
                 <section className="p-4">
                     <div className="flex flex-col gap-3">
                         {/* Ingresos */}
                         <div className="flex items-center justify-between gap-4 rounded-xl p-5 bg-white dark:bg-white/5 shadow-sm border border-gray-50 dark:border-white/5">
                             <div className="flex flex-col gap-1">
-                                <p className="text-[#688961] dark:text-gray-400 text-sm font-medium">Ingresos del mes</p>
+                                <p className="text-[#688961] dark:text-gray-400 text-sm font-medium">Ventas del mes (Totales)</p>
                                 <p className="text-[#121811] dark:text-white tracking-tight text-2xl font-bold">
                                     {loading ? '...' : formatCurrency(stats.ingresos)}
                                 </p>
                             </div>
                             <div className="flex flex-col items-end gap-1">
                                 <span className="flex items-center text-[#078821] text-xs font-bold bg-[#078821]/10 px-2 py-1 rounded-full">
-                                    <span className="material-symbols-outlined text-sm mr-1">trending_up</span>+12%
+                                    <span className="material-symbols-outlined text-sm mr-1">payments</span>Cobrado + Debe
                                 </span>
                             </div>
                         </div>
@@ -104,10 +142,25 @@ const Dashboard = () => {
                             </div>
                         </div>
 
+                        {/* Por Cobrar */}
+                        <div className="flex items-center justify-between gap-4 rounded-xl p-5 bg-white dark:bg-white/5 shadow-sm border border-gray-50 dark:border-white/5">
+                            <div className="flex flex-col gap-1">
+                                <p className="text-[#688961] dark:text-gray-400 text-sm font-medium">Por Cobrar (Cuentas Pendientes)</p>
+                                <p className="text-orange-500 tracking-tight text-2xl font-bold">
+                                    {loading ? '...' : formatCurrency(stats.porCobrar)}
+                                </p>
+                            </div>
+                            <div className="flex flex-col items-end gap-1">
+                                <span className="flex items-center text-orange-500 text-xs font-bold bg-orange-500/10 px-2 py-1 rounded-full">
+                                    <span className="material-symbols-outlined text-sm mr-1">schedule</span>Pendiente
+                                </span>
+                            </div>
+                        </div>
+
                         {/* Balance */}
                         <div className="flex items-center justify-between gap-4 rounded-xl p-5 bg-[#FFD700]/10 dark:bg-[#FFD700]/20 border border-[#FFD700]/30 shadow-sm">
                             <div className="flex flex-col gap-1">
-                                <p className="text-[#B8860B] dark:text-[#FFD700] text-sm font-bold">Balance Actual</p>
+                                <p className="text-[#B8860B] dark:text-[#FFD700] text-sm font-bold">Balance General (Ventas - Gastos)</p>
                                 <p className="text-[#121811] dark:text-white tracking-tight text-2xl font-extrabold">
                                     {loading ? '...' : formatCurrency(stats.balance)}
                                 </p>

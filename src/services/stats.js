@@ -1,46 +1,45 @@
 import { supabase } from './supabase'
 // import { isDemo, demoService } from './demoStore'
 
-export const getDashboardStats = async (userId) => {
-    /* if (isDemo()) {
-        const { data: ingresosPollos } = await demoService.getAll('ingresos_pollos', userId)
-        const { data: ventasGallinas } = await demoService.getAll('ventas_gallinas', userId)
-        const { data: produccionLeche } = await demoService.getAll('produccion_leche', userId)
-
-        const { data: gastosPollos } = await demoService.getAll('gastos_pollos', userId)
-        const { data: gastosGallinas } = await demoService.getAll('gastos_gallinas', userId)
-        const { data: gastosVacas } = await demoService.getAll('gastos_vacas', userId)
-
-        const totalIngresos =
-            (ingresosPollos?.reduce((acc, i) => acc + (i.monto_total || 0), 0) || 0) +
-            (ventasGallinas?.reduce((acc, v) => acc + (v.monto_total || 0), 0) || 0) +
-            (produccionLeche?.reduce((acc, p) => acc + (p.monto_total || 0), 0) || 0)
-
-        const totalGastos =
-            (gastosPollos?.reduce((acc, g) => acc + (g.monto || 0), 0) || 0) +
-            (gastosGallinas?.reduce((acc, g) => acc + (g.monto || 0), 0) || 0) +
-            (gastosVacas?.reduce((acc, g) => acc + (g.monto || 0), 0) || 0)
-
-        return {
-            ingresos: totalIngresos,
-            gastos: totalGastos,
-            balance: totalIngresos - totalGastos
-        }
-    } */
+export const getDashboardStats = async (userId, startDate = null, endDate = null) => {
+    const date = new Date()
+    const firstDay = startDate || new Date(date.getFullYear(), date.getMonth(), 1).toISOString().split('T')[0]
 
     try {
-        const { data: ingresosPollos } = await supabase.from('ingresos_pollos').select('monto_total')
-        const { data: ventasGallinas } = await supabase.from('ventas_gallinas').select('monto_total')
-        const { data: produccionLeche } = await supabase.from('produccion_leche').select('monto_total')
+        let queryIP = supabase.from('ingresos_pollos').select('monto_total, estado_pago').eq('user_id', userId).gte('fecha', firstDay)
+        let queryVG = supabase.from('ventas_gallinas').select('monto_total, estado_pago').eq('user_id', userId).gte('fecha', firstDay)
+        let queryPL = supabase.from('produccion_leche').select('monto_total, estado_pago').eq('user_id', userId).gte('fecha', firstDay)
+        let queryGP = supabase.from('gastos_pollos').select('monto').eq('user_id', userId).gte('fecha', firstDay)
+        let queryGG = supabase.from('gastos_gallinas').select('monto').eq('user_id', userId).gte('fecha', firstDay)
+        let queryGV = supabase.from('gastos_vacas').select('monto').eq('user_id', userId).gte('fecha', firstDay)
 
-        const { data: gastosPollos } = await supabase.from('gastos_pollos').select('monto')
-        const { data: gastosGallinas } = await supabase.from('gastos_gallinas').select('monto')
-        const { data: gastosVacas } = await supabase.from('gastos_vacas').select('monto')
+        if (endDate) {
+            queryIP = queryIP.lte('fecha', endDate)
+            queryVG = queryVG.lte('fecha', endDate)
+            queryPL = queryPL.lte('fecha', endDate)
+            queryGP = queryGP.lte('fecha', endDate)
+            queryGG = queryGG.lte('fecha', endDate)
+            queryGV = queryGV.lte('fecha', endDate)
+        }
+
+        const [
+            { data: ingresosPollos },
+            { data: ventasGallinas },
+            { data: produccionLeche },
+            { data: gastosPollos },
+            { data: gastosGallinas },
+            { data: gastosVacas }
+        ] = await Promise.all([queryIP, queryVG, queryPL, queryGP, queryGG, queryGV])
 
         const totalIngresos =
             (ingresosPollos?.reduce((acc, i) => acc + (i.monto_total || 0), 0) || 0) +
             (ventasGallinas?.reduce((acc, v) => acc + (v.monto_total || 0), 0) || 0) +
             (produccionLeche?.reduce((acc, p) => acc + (p.monto_total || 0), 0) || 0)
+
+        const totalPorCobrar =
+            (ingresosPollos?.filter(i => i.estado_pago === 'debe').reduce((acc, i) => acc + (i.monto_total || 0), 0) || 0) +
+            (ventasGallinas?.filter(v => v.estado_pago === 'debe').reduce((acc, v) => acc + (v.monto_total || 0), 0) || 0) +
+            (produccionLeche?.filter(p => p.estado_pago === 'debe').reduce((acc, p) => acc + (p.monto_total || 0), 0) || 0)
 
         const totalGastos =
             (gastosPollos?.reduce((acc, g) => acc + (g.monto || 0), 0) || 0) +
@@ -50,22 +49,26 @@ export const getDashboardStats = async (userId) => {
         return {
             ingresos: totalIngresos,
             gastos: totalGastos,
-            balance: totalIngresos - totalGastos
+            porCobrar: totalPorCobrar,
+            balance: (totalIngresos - totalPorCobrar) - totalGastos
         }
     } catch (error) {
         console.error('Error fetching dashboard stats:', error)
-        return { ingresos: 0, gastos: 0, balance: 0 }
+        return { ingresos: 0, gastos: 0, porCobrar: 0, balance: 0 }
     }
 }
 
 export const getFinancialMovements = async (userId, startDate, endDate = null) => {
     try {
-        let ingresosPollosQuery = supabase.from('ingresos_pollos').select('monto_total, fecha').gte('fecha', startDate)
-        let ventasGallinasQuery = supabase.from('ventas_gallinas').select('monto_total, fecha').gte('fecha', startDate)
-        let produccionLecheQuery = supabase.from('produccion_leche').select('monto_total, fecha').gte('fecha', startDate)
-        let gastosPollosQuery = supabase.from('gastos_pollos').select('*').gte('fecha', startDate)
-        let gastosGallinasQuery = supabase.from('gastos_gallinas').select('*').gte('fecha', startDate)
-        let gastosVacasQuery = supabase.from('gastos_vacas').select('*').gte('fecha', startDate)
+        // Select only necessary columns to reduce payload size
+        const commonCols = 'id, monto, fecha, concepto, categoria'
+
+        let ingresosPollosQuery = supabase.from('ingresos_pollos').select('monto_total, fecha, estado_pago').eq('user_id', userId).gte('fecha', startDate)
+        let ventasGallinasQuery = supabase.from('ventas_gallinas').select('monto_total, fecha, estado_pago').eq('user_id', userId).gte('fecha', startDate)
+        let produccionLecheQuery = supabase.from('produccion_leche').select('monto_total, fecha, estado_pago').eq('user_id', userId).gte('fecha', startDate)
+        let gastosPollosQuery = supabase.from('gastos_pollos').select(commonCols).eq('user_id', userId).gte('fecha', startDate)
+        let gastosGallinasQuery = supabase.from('gastos_gallinas').select(commonCols).eq('user_id', userId).gte('fecha', startDate)
+        let gastosVacasQuery = supabase.from('gastos_vacas').select(commonCols).eq('user_id', userId).gte('fecha', startDate)
 
         if (endDate) {
             ingresosPollosQuery = ingresosPollosQuery.lte('fecha', endDate)
@@ -93,9 +96,9 @@ export const getFinancialMovements = async (userId, startDate, endDate = null) =
         ])
 
         const todosMovimientos = [
-            ...(ingresosPollos?.map(i => ({ tipo: 'ingreso', concepto: 'Venta de Pollos', monto: i.monto_total, fecha: i.fecha, modulo: 'Pollos' })) || []),
-            ...(ventasGallinas?.map(v => ({ tipo: 'ingreso', concepto: 'Venta de Huevos', monto: v.monto_total, fecha: v.fecha, modulo: 'Gallinas' })) || []),
-            ...(produccionLeche?.map(p => ({ tipo: 'ingreso', concepto: 'Venta de Leche', monto: p.monto_total, fecha: p.fecha, modulo: 'Vacas' })) || []),
+            ...(ingresosPollos?.map(i => ({ tipo: 'ingreso', concepto: 'Venta de Pollos', monto: i.monto_total, fecha: i.fecha, modulo: 'Pollos', estado_pago: i.estado_pago || 'pagado' })) || []),
+            ...(ventasGallinas?.map(v => ({ tipo: 'ingreso', concepto: 'Venta de Huevos', monto: v.monto_total, fecha: v.fecha, modulo: 'Gallinas', estado_pago: v.estado_pago || 'pagado' })) || []),
+            ...(produccionLeche?.map(p => ({ tipo: 'ingreso', concepto: 'Venta de Leche', monto: p.monto_total, fecha: p.fecha, modulo: 'Vacas', estado_pago: p.estado_pago || 'pagado' })) || []),
             ...(gastosPollos?.map(g => ({ tipo: 'gasto', concepto: g.concepto, monto: g.monto, fecha: g.fecha, modulo: 'Pollos', categoria: g.categoria })) || []),
             ...(gastosGallinas?.map(g => ({ tipo: 'gasto', concepto: g.concepto, monto: g.monto, fecha: g.fecha, modulo: 'Gallinas', categoria: g.categoria })) || []),
             ...(gastosVacas?.map(g => ({ tipo: 'gasto', concepto: g.concepto, monto: g.monto, fecha: g.fecha, modulo: 'Vacas', categoria: g.categoria })) || [])
@@ -152,8 +155,7 @@ export const getProductionHistory = async (userId, days = 30) => {
         // Huevos
         const { data: huevos } = await supabase
             .from('ventas_gallinas')
-            .select('fecha, cantidad')
-            .eq('unidad_medida', 'unidad') // Asumiendo que graficamos unidades individuales o cartones, normalizar si es necesario
+            .select('fecha, cantidad, unidad_medida')
             .gte('fecha', startDateStr)
             .order('fecha', { ascending: true })
 
@@ -185,7 +187,8 @@ export const getProductionHistory = async (userId, days = 30) => {
 
         huevos?.forEach(h => {
             if (historyMap[h.fecha]) {
-                historyMap[h.fecha].huevos += Number(h.cantidad)
+                const qty = h.unidad_medida === 'carton' ? Number(h.cantidad) * 30 : Number(h.cantidad)
+                historyMap[h.fecha].huevos += qty
             }
         })
 

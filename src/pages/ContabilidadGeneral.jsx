@@ -282,6 +282,11 @@ const ContabilidadGeneral = () => {
                                     <p className="text-[#121811] dark:text-white text-[15px] font-bold">{mov.concepto}</p>
                                     <p className="text-gray-500 dark:text-gray-400 text-xs font-medium">
                                         {mov.modulo} • {formatDateShort(mov.fecha)}
+                                        {mov.tipo === 'ingreso' && (
+                                            <span className={`ml-2 px-1 rounded-md text-[10px] font-bold ${mov.estado_pago === 'debe' ? 'bg-orange-100 text-orange-600 dark:bg-orange-900/30' : 'bg-green-100 text-green-600 dark:bg-green-900/30'}`}>
+                                                {mov.estado_pago === 'debe' ? 'PENDIENTE' : 'COBRADO'}
+                                            </span>
+                                        )}
                                     </p>
                                 </div>
                                 <div className="text-right">

@@ -2,7 +2,9 @@ import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { getVacas, createVaca, deleteVaca, createProduccion } from '../services/vacas'
+import { getAllRecentClients } from '../services/clients'
 import { formatCurrency } from '../utils/formatters'
+import BottomNavigation from '../components/BottomNavigation'
 
 const VacasLecheras = () => {
     const { user } = useAuth()
@@ -13,6 +15,7 @@ const VacasLecheras = () => {
     const [showFormProduccion, setShowFormProduccion] = useState(false)
     const [selectedVaca, setSelectedVaca] = useState(null)
     const [filtroEstado, setFiltroEstado] = useState('todas')
+    const [recentClients, setRecentClients] = useState([])
 
     const [formVaca, setFormVaca] = useState({
         nombre: '',
@@ -23,12 +26,20 @@ const VacasLecheras = () => {
 
     const [formProduccion, setFormProduccion] = useState({
         litros: '',
-        precio_por_litro: ''
+        precio_por_litro: 2500,
+        estado_pago: 'pagado'
     })
 
     useEffect(() => {
         loadVacas()
+        loadClients()
     }, [user])
+
+    const loadClients = async () => {
+        if (!user) return
+        const { data } = await getAllRecentClients(user.id)
+        setRecentClients(data || [])
+    }
 
     const loadVacas = async () => {
         if (!user) return
@@ -66,14 +77,22 @@ const VacasLecheras = () => {
             litros: parseFloat(formProduccion.litros),
             precio_por_litro: parseFloat(formProduccion.precio_por_litro),
             monto_total: montoTotal,
+            estado_pago: formProduccion.estado_pago,
+            concepto: 'Venta de Leche',
+            user_id: user.id,
             fecha: new Date().toISOString().split('T')[0]
         })
 
         if (!error) {
             setShowFormProduccion(false)
-            setFormProduccion({ litros: '', precio_por_litro: '' })
+            setFormProduccion({
+                litros: '',
+                precio_por_litro: 2500,
+                estado_pago: 'pagado'
+            })
             setSelectedVaca(null)
             loadVacas()
+            loadClients()
         }
     }
 
@@ -351,6 +370,18 @@ const VacasLecheras = () => {
                                         required
                                     />
                                 </div>
+
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-2">Estado de Pago</label>
+                                    <select
+                                        value={formProduccion.estado_pago}
+                                        onChange={(e) => setFormProduccion({ ...formProduccion, estado_pago: e.target.value })}
+                                        className="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-3 text-gray-900 dark:text-white"
+                                    >
+                                        <option value="pagado">Pagado (Caja)</option>
+                                        <option value="debe">Crédito (Debe)</option>
+                                    </select>
+                                </div>
                                 <div className="pt-4 border-t border-gray-200 dark:border-gray-700 flex justify-between items-end">
                                     <div>
                                         <p className="text-xs font-bold text-gray-600 dark:text-gray-400 uppercase">Total</p>
@@ -367,6 +398,8 @@ const VacasLecheras = () => {
                         </div>
                     </div>
                 )}
+                <div className="h-20"></div>
+                <BottomNavigation />
             </div>
         </div>
     )

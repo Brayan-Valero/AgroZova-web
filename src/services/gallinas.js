@@ -191,6 +191,26 @@ export const createVenta = async (ventaData) => {
 }
 
 /**
+ * Actualizar venta de huevos
+ */
+export const updateVenta = async (id, updates) => {
+    try {
+        const { data, error } = await supabase
+            .from('ventas_gallinas')
+            .update(updates)
+            .eq('id', id)
+            .select()
+            .single()
+
+        if (error) throw error
+        return { data, error: null }
+    } catch (error) {
+        console.error('Error updating venta:', error)
+        return { data: null, error }
+    }
+}
+
+/**
  * Calcular rentabilidad de un lote
  */
 export const calcularRentabilidad = async (loteId) => {
