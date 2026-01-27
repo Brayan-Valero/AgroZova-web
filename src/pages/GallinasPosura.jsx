@@ -21,12 +21,14 @@ const GallinasPosura = () => {
         nombre: '',
         raza: '',
         poblacion_inicial: '',
+        precio_unitario: '',
+        edad_inicial: '',
         fecha_inicio: new Date().toISOString().split('T')[0]
     })
 
     const [formVenta, setFormVenta] = useState({
         cantidad: '',
-        precio_unitario: 18000,
+        precio_unitario: 12000,
         estado_pago: 'debe'
     })
 
@@ -51,22 +53,62 @@ const GallinasPosura = () => {
 
     const handleSubmitLote = async (e) => {
         e.preventDefault()
-        const { data, error } = await createLote({
-            ...formLote,
-            user_id: user.id,
-            poblacion_actual: formLote.poblacion_inicial
-        })
 
-        if (!error) {
+        const loteData = {
+            nombre: formLote.nombre,
+            raza: formLote.raza,
+            poblacion_inicial: parseInt(formLote.poblacion_inicial),
+            poblacion_actual: parseInt(formLote.poblacion_inicial),
+            fecha_inicio: formLote.fecha_inicio,
+            user_id: user.id,
+            edad_semanas: parseInt(formLote.edad_inicial || 0)
+        }
+
+        const { data: newLote, error } = await createLote(loteData)
+
+        if (!error && newLote) {
+            // Registrar gasto automático si hay precio
+            if (formLote.precio_unitario && parseFloat(formLote.precio_unitario) > 0) {
+                const montoTotal = parseInt(formLote.poblacion_inicial) * parseFloat(formLote.precio_unitario)
+                try {
+                    await createGasto({
+                        lote_id: newLote.id,
+                        concepto: 'Compra inicial de aves',
+                        monto: montoTotal,
+                        categoria: 'aves',
+                        user_id: user.id,
+                        fecha: formLote.fecha_inicio
+                    })
+                } catch (err) {
+                    console.error('Error al crear gasto inicial:', err)
+                }
+            }
+
             setShowFormLote(false)
             setFormLote({
                 nombre: '',
                 raza: '',
                 poblacion_inicial: '',
+                precio_unitario: '',
+                edad_inicial: '',
                 fecha_inicio: new Date().toISOString().split('T')[0]
             })
             loadLotes()
         }
+    }
+
+    const calcularEdadActual = (fechaInicio, edadInicialSem) => {
+        if (!fechaInicio) return 0
+        const [year, month, day] = fechaInicio.split('-').map(Number)
+        const inicio = new Date(year, month - 1, day)
+        const hoy = new Date()
+        hoy.setHours(0, 0, 0, 0)
+
+        const diffTime = hoy - inicio
+        if (diffTime < 0) return parseInt(edadInicialSem) || 0
+
+        const diffWeeks = Math.floor(diffTime / (1000 * 60 * 60 * 24 * 7))
+        return (parseInt(edadInicialSem) || 0) + diffWeeks
     }
 
     const handleSubmitVenta = async (e) => {
@@ -89,7 +131,7 @@ const GallinasPosura = () => {
             setShowFormVenta(false)
             setFormVenta({
                 cantidad: '',
-                precio_unitario: unidadMedida === 'carton' ? 18000 : 700,
+                precio_unitario: unidadMedida === 'carton' ? 12000 : 400,
                 estado_pago: 'debe'
             })
             setSelectedLote(null)
@@ -180,7 +222,9 @@ const GallinasPosura = () => {
                                         </div>
                                         <div className="bg-white dark:bg-[#0a1108] p-2 rounded-lg">
                                             <p className="text-[#688961] text-xs">Edad (Sem)</p>
-                                            <p className="text-[#121811] dark:text-white font-bold">{lote.edad_semanas || 0}</p>
+                                            <p className="text-[#121811] dark:text-white font-bold">
+                                                {calcularEdadActual(lote.fecha_inicio, lote.edad_semanas)}
+                                            </p>
                                         </div>
                                     </div>
 
@@ -246,26 +290,50 @@ const GallinasPosura = () => {
                                         placeholder="Ej: Hy-Line Brown"
                                     />
                                 </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-[#688961] uppercase mb-2">Población Inicial</label>
-                                    <input
-                                        type="number"
-                                        value={formLote.poblacion_inicial}
-                                        onChange={(e) => setFormLote({ ...formLote, poblacion_inicial: e.target.value })}
-                                        className="w-full bg-white dark:bg-[#0a1108] border border-[#dde6db] dark:border-[#2a3528] rounded-lg p-3 text-[#121811] dark:text-white"
-                                        placeholder="1200"
-                                        required
-                                    />
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-xs font-bold text-[#688961] uppercase mb-2">Población Inicial</label>
+                                        <input
+                                            type="number"
+                                            value={formLote.poblacion_inicial}
+                                            onChange={(e) => setFormLote({ ...formLote, poblacion_inicial: e.target.value })}
+                                            className="w-full bg-white dark:bg-[#0a1108] border border-[#dde6db] dark:border-[#2a3528] rounded-lg p-3 text-[#121811] dark:text-white"
+                                            placeholder="1200"
+                                            required
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-[#688961] uppercase mb-2">Precio/Ave</label>
+                                        <input
+                                            type="number"
+                                            value={formLote.precio_unitario}
+                                            onChange={(e) => setFormLote({ ...formLote, precio_unitario: e.target.value })}
+                                            className="w-full bg-white dark:bg-[#0a1108] border border-[#dde6db] dark:border-[#2a3528] rounded-lg p-3 text-[#121811] dark:text-white"
+                                            placeholder="$0.00"
+                                        />
+                                    </div>
                                 </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-[#688961] uppercase mb-2">Fecha de Inicio</label>
-                                    <input
-                                        type="date"
-                                        value={formLote.fecha_inicio}
-                                        onChange={(e) => setFormLote({ ...formLote, fecha_inicio: e.target.value })}
-                                        className="w-full bg-white dark:bg-[#0a1108] border border-[#dde6db] dark:border-[#2a3528] rounded-lg p-3 text-[#121811] dark:text-white"
-                                        required
-                                    />
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-xs font-bold text-[#688961] uppercase mb-2">Edad Inicial (Sem)</label>
+                                        <input
+                                            type="number"
+                                            value={formLote.edad_inicial}
+                                            onChange={(e) => setFormLote({ ...formLote, edad_inicial: e.target.value })}
+                                            className="w-full bg-white dark:bg-[#0a1108] border border-[#dde6db] dark:border-[#2a3528] rounded-lg p-3 text-[#121811] dark:text-white"
+                                            placeholder="Ej: 16"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-[#688961] uppercase mb-2">Fecha de Inicio</label>
+                                        <input
+                                            type="date"
+                                            value={formLote.fecha_inicio}
+                                            onChange={(e) => setFormLote({ ...formLote, fecha_inicio: e.target.value })}
+                                            className="w-full bg-white dark:bg-[#0a1108] border border-[#dde6db] dark:border-[#2a3528] rounded-lg p-3 text-[#121811] dark:text-white"
+                                            required
+                                        />
+                                    </div>
                                 </div>
                                 <button
                                     type="submit"
@@ -301,7 +369,7 @@ const GallinasPosura = () => {
                                             type="button"
                                             onClick={() => {
                                                 setUnidadMedida('carton')
-                                                setFormVenta({ ...formVenta, precio_unitario: 18000 })
+                                                setFormVenta({ ...formVenta, precio_unitario: 12000 })
                                             }}
                                             className={`flex-1 py-2 text-sm font-bold rounded-md ${unidadMedida === 'carton' ? 'bg-white dark:bg-primary dark:text-black shadow-sm' : 'text-[#688961] dark:text-gray-400'}`}
                                         >
@@ -311,7 +379,7 @@ const GallinasPosura = () => {
                                             type="button"
                                             onClick={() => {
                                                 setUnidadMedida('unidad')
-                                                setFormVenta({ ...formVenta, precio_unitario: 700 })
+                                                setFormVenta({ ...formVenta, precio_unitario: 400 })
                                             }}
                                             className={`flex-1 py-2 text-sm font-bold rounded-md ${unidadMedida === 'unidad' ? 'bg-white dark:bg-primary dark:text-black shadow-sm' : 'text-[#688961] dark:text-gray-400'}`}
                                         >

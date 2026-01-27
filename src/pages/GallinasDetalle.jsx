@@ -1,17 +1,25 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { getLoteById, getGastosByLote, getVentasByLote, updateVenta } from '../services/gallinas'
+import { getLoteById, getGastosByLote, getVentasByLote, updateVenta, createGasto } from '../services/gallinas'
+import { useAuth } from '../context/AuthContext'
 import { formatCurrency, formatDateShort } from '../utils/formatters'
 import BottomNavigation from '../components/BottomNavigation'
 
 const GallinasDetalle = () => {
     const { id } = useParams()
+    const { user } = useAuth()
     const navigate = useNavigate()
     const [lote, setLote] = useState(null)
     const [gastos, setGastos] = useState([])
     const [ventas, setVentas] = useState([])
     const [activeTab, setActiveTab] = useState('resumen')
     const [loading, setLoading] = useState(true)
+    const [showFormGasto, setShowFormGasto] = useState(false)
+    const [formGasto, setFormGasto] = useState({
+        concepto: '',
+        monto: '',
+        categoria: 'alimento'
+    })
 
     useEffect(() => {
         loadData()
@@ -35,6 +43,20 @@ const GallinasDetalle = () => {
         if (!error) {
             loadData()
         }
+    }
+
+    const calcularEdadActual = () => {
+        if (!lote || !lote.fecha_inicio) return 0
+        const [year, month, day] = lote.fecha_inicio.split('-').map(Number)
+        const inicio = new Date(year, month - 1, day)
+        const hoy = new Date()
+        hoy.setHours(0, 0, 0, 0)
+
+        const diffTime = hoy - inicio
+        if (diffTime < 0) return parseInt(lote.edad_semanas) || 0
+
+        const diffWeeks = Math.floor(diffTime / (1000 * 60 * 60 * 24 * 7))
+        return (parseInt(lote.edad_semanas) || 0) + diffWeeks
     }
 
     if (loading) return <div className="p-8 text-center">Cargando...</div>
@@ -131,8 +153,8 @@ const GallinasDetalle = () => {
                                     <span className="font-medium text-[#121811] dark:text-white">{lote.poblacion_actual} aves</span>
                                 </div>
                                 <div className="flex justify-between border-b border-gray-50 dark:border-white/5 pb-2">
-                                    <span className="text-gray-500">Edad (aprox)</span>
-                                    <span className="font-medium text-[#121811] dark:text-white">{lote.edad_semanas} semanas</span>
+                                    <span className="text-gray-500">Edad Actual</span>
+                                    <span className="font-medium text-[#121811] dark:text-white">{calcularEdadActual()} semanas</span>
                                 </div>
                                 <div className="flex justify-between pt-1">
                                     <span className="text-gray-500">Producción Actual</span>
@@ -145,7 +167,16 @@ const GallinasDetalle = () => {
 
                 {activeTab === 'gastos' && (
                     <div className="space-y-4">
-                        <h3 className="font-bold text-[#121811] dark:text-white">Historial de Gastos</h3>
+                        <div className="flex justify-between items-center">
+                            <h3 className="font-bold text-[#121811] dark:text-white">Historial de Gastos</h3>
+                            <button
+                                onClick={() => setShowFormGasto(true)}
+                                className="bg-primary text-black text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1 hover:bg-opacity-90 transition-all"
+                            >
+                                <span className="material-symbols-outlined text-sm">add</span>
+                                Nuevo Gasto
+                            </button>
+                        </div>
                         {gastos.length === 0 ? (
                             <div className="text-center py-8 text-gray-400">No hay gastos registrados</div>
                         ) : (
@@ -204,10 +235,73 @@ const GallinasDetalle = () => {
                         )}
                     </div>
                 )}
-            </main>
-
-            <BottomNavigation />
         </div>
+    )
+}
+            </main >
+
+    {/* Modal Nuevo Gasto */ }
+{
+    showFormGasto && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white dark:bg-[#1a2618] rounded-2xl p-6 max-w-md w-full border-2 border-primary/30">
+                <div className="flex justify-between items-center mb-6">
+                    <h3 className="font-bold text-lg text-[#121811] dark:text-white">Nuevo Gasto</h3>
+                    <button onClick={() => setShowFormGasto(false)}>
+                        <span className="material-symbols-outlined text-gray-400">close</span>
+                    </button>
+                </div>
+                <form onSubmit={handleAddGasto} className="space-y-4">
+                    <div>
+                        <label className="block text-xs font-bold text-[#688961] uppercase mb-2">Concepto</label>
+                        <input
+                            type="text"
+                            value={formGasto.concepto}
+                            onChange={(e) => setFormGasto({ ...formGasto, concepto: e.target.value })}
+                            className="w-full bg-white dark:bg-[#0a1108] border border-[#dde6db] dark:border-[#2a3528] rounded-lg p-3 text-[#121811] dark:text-white"
+                            placeholder="Ej: Alimento concentrado"
+                            required
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-xs font-bold text-[#688961] uppercase mb-2">Categoría</label>
+                        <select
+                            value={formGasto.categoria}
+                            onChange={(e) => setFormGasto({ ...formGasto, categoria: e.target.value })}
+                            className="w-full bg-white dark:bg-[#0a1108] border border-[#dde6db] dark:border-[#2a3528] rounded-lg p-3 text-[#121811] dark:text-white"
+                        >
+                            <option value="alimento">Alimento</option>
+                            <option value="medicina">Medicina/Vitaminas</option>
+                            <option value="mano_obra">Mano de Obra</option>
+                            <option value="servicios">Servicios</option>
+                            <option value="otros">Otros</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label className="block text-xs font-bold text-[#688961] uppercase mb-2">Monto</label>
+                        <input
+                            type="number"
+                            value={formGasto.monto}
+                            onChange={(e) => setFormGasto({ ...formGasto, monto: e.target.value })}
+                            className="w-full bg-white dark:bg-[#0a1108] border border-[#dde6db] dark:border-[#2a3528] rounded-lg p-3 text-lg font-bold text-[#121811] dark:text-white"
+                            placeholder="$0.00"
+                            required
+                        />
+                    </div>
+                    <button
+                        type="submit"
+                        className="w-full bg-primary text-black font-black px-6 py-3 rounded-lg shadow-md hover:bg-opacity-90 transition-all"
+                    >
+                        Registrar Gasto
+                    </button>
+                </form>
+            </div>
+        </div>
+    )
+}
+
+<BottomNavigation />
+        </div >
     )
 }
 
