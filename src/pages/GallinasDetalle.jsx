@@ -59,6 +59,24 @@ const GallinasDetalle = () => {
         return (parseInt(lote.edad_semanas) || 0) + diffWeeks
     }
 
+    const handleAddGasto = async (e) => {
+        e.preventDefault()
+        const { error } = await createGasto({
+            lote_id: id,
+            concepto: formGasto.concepto,
+            monto: parseFloat(formGasto.monto),
+            categoria: formGasto.categoria,
+            user_id: user.id,
+            fecha: new Date().toISOString().split('T')[0]
+        })
+
+        if (!error) {
+            setShowFormGasto(false)
+            setFormGasto({ concepto: '', monto: '', categoria: 'alimento' })
+            loadData()
+        }
+    }
+
     if (loading) return <div className="p-8 text-center">Cargando...</div>
     if (!lote) return <div className="p-8 text-center">Lote no encontrado</div>
 
@@ -235,72 +253,68 @@ const GallinasDetalle = () => {
                         )}
                     </div>
                 )}
-        </div>
-    )
-}
-            </main >
+            </main>
 
-    {/* Modal Nuevo Gasto */ }
-{
-    showFormGasto && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white dark:bg-[#1a2618] rounded-2xl p-6 max-w-md w-full border-2 border-primary/30">
-                <div className="flex justify-between items-center mb-6">
-                    <h3 className="font-bold text-lg text-[#121811] dark:text-white">Nuevo Gasto</h3>
-                    <button onClick={() => setShowFormGasto(false)}>
-                        <span className="material-symbols-outlined text-gray-400">close</span>
-                    </button>
+            {/* Modal Nuevo Gasto */}
+            {showFormGasto && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white dark:bg-[#1a2618] rounded-2xl p-6 max-w-md w-full border-2 border-primary/30">
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="font-bold text-lg text-[#121811] dark:text-white">Nuevo Gasto</h3>
+                            <button onClick={() => setShowFormGasto(false)}>
+                                <span className="material-symbols-outlined text-gray-400">close</span>
+                            </button>
+                        </div>
+                        <form onSubmit={handleAddGasto} className="space-y-4">
+                            <div>
+                                <label className="block text-xs font-bold text-[#688961] uppercase mb-2">Concepto</label>
+                                <input
+                                    type="text"
+                                    value={formGasto.concepto}
+                                    onChange={(e) => setFormGasto({ ...formGasto, concepto: e.target.value })}
+                                    className="w-full bg-white dark:bg-[#0a1108] border border-[#dde6db] dark:border-[#2a3528] rounded-lg p-3 text-[#121811] dark:text-white"
+                                    placeholder="Ej: Alimento concentrado"
+                                    required
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-[#688961] uppercase mb-2">Categoría</label>
+                                <select
+                                    value={formGasto.categoria}
+                                    onChange={(e) => setFormGasto({ ...formGasto, categoria: e.target.value })}
+                                    className="w-full bg-white dark:bg-[#0a1108] border border-[#dde6db] dark:border-[#2a3528] rounded-lg p-3 text-[#121811] dark:text-white"
+                                >
+                                    <option value="alimento">Alimento</option>
+                                    <option value="medicina">Medicina/Vitaminas</option>
+                                    <option value="mano_obra">Mano de Obra</option>
+                                    <option value="servicios">Servicios</option>
+                                    <option value="otros">Otros</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-[#688961] uppercase mb-2">Monto</label>
+                                <input
+                                    type="number"
+                                    value={formGasto.monto}
+                                    onChange={(e) => setFormGasto({ ...formGasto, monto: e.target.value })}
+                                    className="w-full bg-white dark:bg-[#0a1108] border border-[#dde6db] dark:border-[#2a3528] rounded-lg p-3 text-lg font-bold text-[#121811] dark:text-white"
+                                    placeholder="$0.00"
+                                    required
+                                />
+                            </div>
+                            <button
+                                type="submit"
+                                className="w-full bg-primary text-black font-black px-6 py-3 rounded-lg shadow-md hover:bg-opacity-90 transition-all"
+                            >
+                                Registrar Gasto
+                            </button>
+                        </form>
+                    </div>
                 </div>
-                <form onSubmit={handleAddGasto} className="space-y-4">
-                    <div>
-                        <label className="block text-xs font-bold text-[#688961] uppercase mb-2">Concepto</label>
-                        <input
-                            type="text"
-                            value={formGasto.concepto}
-                            onChange={(e) => setFormGasto({ ...formGasto, concepto: e.target.value })}
-                            className="w-full bg-white dark:bg-[#0a1108] border border-[#dde6db] dark:border-[#2a3528] rounded-lg p-3 text-[#121811] dark:text-white"
-                            placeholder="Ej: Alimento concentrado"
-                            required
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-xs font-bold text-[#688961] uppercase mb-2">Categoría</label>
-                        <select
-                            value={formGasto.categoria}
-                            onChange={(e) => setFormGasto({ ...formGasto, categoria: e.target.value })}
-                            className="w-full bg-white dark:bg-[#0a1108] border border-[#dde6db] dark:border-[#2a3528] rounded-lg p-3 text-[#121811] dark:text-white"
-                        >
-                            <option value="alimento">Alimento</option>
-                            <option value="medicina">Medicina/Vitaminas</option>
-                            <option value="mano_obra">Mano de Obra</option>
-                            <option value="servicios">Servicios</option>
-                            <option value="otros">Otros</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label className="block text-xs font-bold text-[#688961] uppercase mb-2">Monto</label>
-                        <input
-                            type="number"
-                            value={formGasto.monto}
-                            onChange={(e) => setFormGasto({ ...formGasto, monto: e.target.value })}
-                            className="w-full bg-white dark:bg-[#0a1108] border border-[#dde6db] dark:border-[#2a3528] rounded-lg p-3 text-lg font-bold text-[#121811] dark:text-white"
-                            placeholder="$0.00"
-                            required
-                        />
-                    </div>
-                    <button
-                        type="submit"
-                        className="w-full bg-primary text-black font-black px-6 py-3 rounded-lg shadow-md hover:bg-opacity-90 transition-all"
-                    >
-                        Registrar Gasto
-                    </button>
-                </form>
-            </div>
-        </div>
-    )
-}
+            )
+            }
 
-<BottomNavigation />
+            <BottomNavigation />
         </div >
     )
 }

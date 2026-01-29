@@ -1,17 +1,25 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { getVacaById, getGastosByVaca, getProduccionLecheByVaca, updateProduccionLeche } from '../services/vacas'
+import { getVacaById, getGastosByVaca, getProduccionLecheByVaca, updateProduccionLeche, createGasto } from '../services/vacas'
+import { useAuth } from '../context/AuthContext'
 import { formatCurrency, formatDateShort } from '../utils/formatters'
 import BottomNavigation from '../components/BottomNavigation'
 
 const VacasDetalle = () => {
     const { id } = useParams()
+    const { user } = useAuth()
     const navigate = useNavigate()
     const [vaca, setVaca] = useState(null)
     const [gastos, setGastos] = useState([])
     const [produccion, setProduccion] = useState([])
     const [activeTab, setActiveTab] = useState('resumen')
     const [loading, setLoading] = useState(true)
+    const [showFormGasto, setShowFormGasto] = useState(false)
+    const [formGasto, setFormGasto] = useState({
+        concepto: '',
+        monto: '',
+        categoria: 'alimento'
+    })
 
     useEffect(() => {
         loadData()
@@ -33,6 +41,24 @@ const VacasDetalle = () => {
     const handleMarkAsPaid = async (produccionId) => {
         const { error } = await updateProduccionLeche(produccionId, { estado_pago: 'pagado' })
         if (!error) {
+            loadData()
+        }
+    }
+
+    const handleAddGasto = async (e) => {
+        e.preventDefault()
+        const { error } = await createGasto({
+            vaca_id: id,
+            concepto: formGasto.concepto,
+            monto: parseFloat(formGasto.monto),
+            categoria: formGasto.categoria,
+            user_id: user.id,
+            fecha: new Date().toISOString().split('T')[0]
+        })
+
+        if (!error) {
+            setShowFormGasto(false)
+            setFormGasto({ concepto: '', monto: '', categoria: 'alimento' })
             loadData()
         }
     }
@@ -148,7 +174,16 @@ const VacasDetalle = () => {
 
                 {activeTab === 'gastos' && (
                     <div className="space-y-4">
-                        <h3 className="font-bold text-[#121811] dark:text-white">Historial de Gastos</h3>
+                        <div className="flex justify-between items-center">
+                            <h3 className="font-bold text-[#121811] dark:text-white">Historial de Gastos</h3>
+                            <button
+                                onClick={() => setShowFormGasto(true)}
+                                className="bg-primary text-black text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1 hover:bg-opacity-90 transition-all"
+                            >
+                                <span className="material-symbols-outlined text-sm">add</span>
+                                Nuevo Gasto
+                            </button>
+                        </div>
                         {gastos.length === 0 ? (
                             <div className="text-center py-8 text-gray-400">No hay gastos registrados</div>
                         ) : (
@@ -208,6 +243,64 @@ const VacasDetalle = () => {
                     </div>
                 )}
             </main>
+
+            {/* Modal Nuevo Gasto */}
+            {showFormGasto && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white dark:bg-[#1a2618] rounded-2xl p-6 max-w-md w-full border-2 border-primary/30">
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="font-bold text-lg text-[#121811] dark:text-white">Nuevo Gasto</h3>
+                            <button onClick={() => setShowFormGasto(false)}>
+                                <span className="material-symbols-outlined text-gray-400">close</span>
+                            </button>
+                        </div>
+                        <form onSubmit={handleAddGasto} className="space-y-4">
+                            <div>
+                                <label className="block text-xs font-bold text-[#688961] uppercase mb-2">Concepto</label>
+                                <input
+                                    type="text"
+                                    value={formGasto.concepto}
+                                    onChange={(e) => setFormGasto({ ...formGasto, concepto: e.target.value })}
+                                    className="w-full bg-white dark:bg-[#0a1108] border border-[#dde6db] dark:border-[#2a3528] rounded-lg p-3 text-[#121811] dark:text-white"
+                                    placeholder="Ej: Alimento concentrado"
+                                    required
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-[#688961] uppercase mb-2">Categoría</label>
+                                <select
+                                    value={formGasto.categoria}
+                                    onChange={(e) => setFormGasto({ ...formGasto, categoria: e.target.value })}
+                                    className="w-full bg-white dark:bg-[#0a1108] border border-[#dde6db] dark:border-[#2a3528] rounded-lg p-3 text-[#121811] dark:text-white"
+                                >
+                                    <option value="alimento">Alimento</option>
+                                    <option value="medicina">Medicina/Vitaminas</option>
+                                    <option value="mano_obra">Mano de Obra</option>
+                                    <option value="servicios">Servicios</option>
+                                    <option value="otros">Otros</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-[#688961] uppercase mb-2">Monto</label>
+                                <input
+                                    type="number"
+                                    value={formGasto.monto}
+                                    onChange={(e) => setFormGasto({ ...formGasto, monto: e.target.value })}
+                                    className="w-full bg-white dark:bg-[#0a1108] border border-[#dde6db] dark:border-[#2a3528] rounded-lg p-3 text-lg font-bold text-[#121811] dark:text-white"
+                                    placeholder="$0.00"
+                                    required
+                                />
+                            </div>
+                            <button
+                                type="submit"
+                                className="w-full bg-primary text-black font-black px-6 py-3 rounded-lg shadow-md hover:bg-opacity-90 transition-all"
+                            >
+                                Registrar Gasto
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            )}
 
             <BottomNavigation />
         </div>
